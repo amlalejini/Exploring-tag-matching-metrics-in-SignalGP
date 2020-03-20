@@ -195,6 +195,7 @@ protected:
   size_t GENERATIONS;
   size_t POP_SIZE;
   bool STOP_ON_SOLUTION;
+  bool RANDOM_INIT_POP;
   // Environment group
   size_t NUM_SIGNAL_RESPONSES;
   size_t NUM_ENV_CYCLES;
@@ -265,6 +266,7 @@ protected:
 
   void InitPop();
   void InitPop_Random();
+  void InitPop_Homogeneous();
   void InitPop_Hardcoded();
 
   void DoEvaluation();
@@ -317,6 +319,7 @@ void AltSignalWorld::InitConfigs(const AltSignalConfig & config) {
   GENERATIONS = config.GENERATIONS();
   POP_SIZE = config.POP_SIZE();
   STOP_ON_SOLUTION = config.STOP_ON_SOLUTION();
+  RANDOM_INIT_POP = config.RANDOM_INIT_POP();
   // environment group
   NUM_SIGNAL_RESPONSES = config.NUM_SIGNAL_RESPONSES();
   NUM_ENV_CYCLES = config.NUM_ENV_CYCLES();
@@ -670,8 +673,13 @@ void AltSignalWorld::InitMutator() {
 
 void AltSignalWorld::InitPop() {
   this->Clear();
-  InitPop_Random();
-  // InitPop_Hardcoded();
+  if (RANDOM_INIT_POP) {
+    std::cout << "Initializing population randomly." << std::endl;
+    InitPop_Random();
+  } else {
+    std::cout << "Initializing population with simple ancestor." << std::endl;
+    InitPop_Homogeneous();
+  }
 }
 
 void AltSignalWorld::InitPop_Hardcoded() {
@@ -685,6 +693,21 @@ void AltSignalWorld::InitPop_Hardcoded() {
   program.PushInst(*inst_lib, "Response-1", {0, 0, 0}, {tag_t()});
   program.PushInst(*inst_lib, "Close", {0, 0, 0}, {tag_t()});
   program.PushInst(*inst_lib, "Response-0", {0, 0, 0}, {tag_t()});
+  for (size_t i = 0; i < POP_SIZE; ++i) {
+    this->Inject({program}, 1);
+  }
+}
+
+void AltSignalWorld::InitPop_Homogeneous() {
+  program_t program;
+  // Select a random ancestor tag.
+  tag_t ancestor_tag = emp::BitSet<AltSignalWorldDefs::TAG_LEN>(*random_ptr, 0.5);
+  program.PushFunction(ancestor_tag);
+  // Fill up function with Nop instructions
+  for (size_t i = 0; i < FUNC_LEN_RANGE.GetUpper(); ++i) {
+    program.PushInst(*inst_lib, "Nop", {0, 0, 0}, {ancestor_tag});
+  }
+  // Inject POP_SIZE number of ancestors into the world.
   for (size_t i = 0; i < POP_SIZE; ++i) {
     this->Inject({program}, 1);
   }

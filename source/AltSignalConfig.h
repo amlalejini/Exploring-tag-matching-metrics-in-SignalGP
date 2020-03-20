@@ -9,6 +9,7 @@ EMP_BUILD_CONFIG(AltSignalConfig,
     VALUE(GENERATIONS, size_t, 100, "How many generations do we evolve things?"),
     VALUE(POP_SIZE, size_t, 100, "How big is our population?"),
     VALUE(STOP_ON_SOLUTION, bool, true, "Should we stop run on solution?"),
+    VALUE(RANDOM_INIT_POP, bool, true, "Should the population be initialized with random organisms?"),
 
   GROUP(ENVIRONMENT_GROUP, "Environment settings"),
     VALUE(NUM_SIGNAL_RESPONSES, size_t, 2, "How many responses are there to the environment signal?"),
