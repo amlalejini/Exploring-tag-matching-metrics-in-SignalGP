@@ -205,6 +205,7 @@ protected:
   size_t GENERATIONS;
   size_t POP_SIZE;
   bool STOP_ON_SOLUTION;
+  bool RANDOM_INIT_POP;
   // Evaluation group
   size_t EVAL_TRIAL_CNT;
   // Environment group
@@ -273,6 +274,7 @@ protected:
 
   void InitPop();
   void InitPop_Random();
+  void InitPop_Homogeneous();
   void InitPop_Hardcoded();
 
   void DoEvaluation();
@@ -325,6 +327,7 @@ void ChgEnvWorld::InitConfigs(const config_t & config) {
   GENERATIONS = config.GENERATIONS();
   POP_SIZE = config.POP_SIZE();
   STOP_ON_SOLUTION = config.STOP_ON_SOLUTION();
+  RANDOM_INIT_POP = config.RANDOM_INIT_POP();
   // Evaluation group
   EVAL_TRIAL_CNT = config.EVAL_TRIAL_CNT();
   // Environment group
@@ -582,7 +585,13 @@ void ChgEnvWorld::InitMutator() {
 
 void ChgEnvWorld::InitPop() {
   this->Clear();
-  InitPop_Random();
+  if (RANDOM_INIT_POP) {
+    std::cout << " randomly." << std::endl;
+    InitPop_Random();
+  } else {
+    std::cout << " simple ancestor." << std::endl;
+    InitPop_Homogeneous();
+  }
 }
 
 void ChgEnvWorld::InitPop_Random() {
@@ -596,6 +605,21 @@ void ChgEnvWorld::InitPop_Random() {
                                    ChgEnvWorldDefs::INST_ARG_CNT,
                                    ARG_VAL_RANGE)
                   }, 1);
+  }
+}
+
+void ChgEnvWorld::InitPop_Homogeneous() {
+  program_t program;
+  // Select a random ancestor tag.
+  tag_t ancestor_tag = emp::BitSet<ChgEnvWorldDefs::TAG_LEN>(*random_ptr, 0.5);
+  program.PushFunction(ancestor_tag);
+  // Fill up function with Nop instructions
+  for (size_t i = 0; i < FUNC_LEN_RANGE.GetUpper(); ++i) {
+    program.PushInst(*inst_lib, "Nop", {0, 0, 0}, {ancestor_tag});
+  }
+  // Inject POP_SIZE number of ancestors into the world.
+  for (size_t i = 0; i < POP_SIZE; ++i) {
+    this->Inject({program}, 1);
   }
 }
 

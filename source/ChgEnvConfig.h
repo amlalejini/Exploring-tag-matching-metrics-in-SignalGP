@@ -9,6 +9,7 @@ EMP_BUILD_CONFIG(ChgEnvConfig,
     VALUE(GENERATIONS, size_t, 100, "How many generations do we evolve things?"),
     VALUE(POP_SIZE, size_t, 100, "How big is our population?"),
     VALUE(STOP_ON_SOLUTION, bool, true, "Should we stop run on solution?"),
+    VALUE(RANDOM_INIT_POP, bool, true, "Should the population be initialized with random organisms?"),
 
   GROUP(EVALUATION_GROUP, "Organism evaluation settings"),
     VALUE(EVAL_TRIAL_CNT, size_t, 3, "How many times should we evaluate individuals (where fitness = min trial performance)?"),
