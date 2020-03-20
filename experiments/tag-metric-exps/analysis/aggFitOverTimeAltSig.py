@@ -21,9 +21,9 @@ key_settings = [
     "CPU_TIME_PER_ENV_CYCLE"
 ]
 
-possible_metrics = ["hamming", "streak", "symmetric wrap", "hash"]
-possible_selectors = ["ranked"]
-possible_regulators = ["add", "mult"]
+# possible_metrics = ["hamming", "streak", "symmetric wrap", "hash", "integer", ""]
+# possible_selectors = ["ranked"]
+# possible_regulators = ["add", "mult"]
 
 def mkdir_p(path):
     """

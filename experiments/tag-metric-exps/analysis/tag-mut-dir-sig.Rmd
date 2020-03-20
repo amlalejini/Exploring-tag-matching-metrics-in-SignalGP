@@ -1,0 +1,203 @@
+---
+title: "Demonstrating Genetic Regulation in SignalGP - Simple Changing Environment"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 4
+  html_document: 
+    keep_md: yes
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    collapsed: false
+    theme: default
+---
+
+### Load R libraries
+```{r, message=FALSE}
+library(tidyr)    # (Wickham & Henry, 2018)
+library(ggplot2)  # (Wickham, 2009)
+library(plyr)     # (Wickham, 2011)
+library(dplyr)    # (Wickham et al., 2018)
+library(cowplot)  # (Wilke, 2018)
+```
+
+### Extract max fit orgs data
+```{r}
+data_loc <- "../data/dir-sig-mut-sweep/max_fit_orgs.csv"
+data <- read.csv(data_loc, na.strings="NONE")
+
+
+data$matchbin_metric <- factor(data$matchbin_metric,
+                                     levels=c("hamming", "integer", "integer-symmetric", "hash", "streak", "streak-exact"))
+
+data$tag_mut_rate <- as.numeric(data$MUT_RATE__FUNC_TAG_BF)
+data$tag_mut_rate_str <- factor(data$tag_mut_rate,
+                                levels=c("3e-06","1e-05","3e-05", "1e-04","3e-04","0.001","0.003","0.01", "0.03","0.1"))
+```
+
+### Extract fitness over time data
+```{r}
+fot_data_loc <- "../data/dir-sig-mut-sweep/fot.csv"
+fot_data <- read.csv(fot_data_loc, na.strings="NONE")
+fot_data$tag_metric <- factor(fot_data$tag_metric,
+                                    levels=c("hamming", "integer", "integer-symmetric", "hash", "streak", "streak-exact"))
+fot_data$tag_mut_rate <- as.numeric(fot_data$tag_mut_rate)
+fot_data$tag_mut_rate_str <- factor(fot_data$tag_mut_rate, levels=c("3e-06","1e-05","3e-05", "1e-04","3e-04","0.001","0.003","0.01", "0.03","0.1"))
+```
+
+### Extract network data
+
+```{r}
+dir_sig_network_data_loc <- "../data/dir-sig-mut-sweep/reg_graphs_summary.csv"
+dir_sig_network_data <- read.csv(dir_sig_network_data_loc, na.strings="NA")
+dir_sig_network_data$test_id <- factor(dir_sig_network_data$test_id,
+                                       levels(factor(dir_sig_network_data$test_id)))
+```
+
+### Solution count by match metric
+```{r}
+ggplot(data, aes(x=matchbin_metric, y=aggregate_score, fill=tag_mut_rate_str)) +
+  # geom_bar(stat="identity") +
+  geom_boxplot() +
+  ggsave("dir-sig-scores.png", width=16, height=8)
+
+# ggplot(filter(data, matchbin_metric=="hamming"), aes(x=matchbin_metric, y=aggregate_score, fill=tag_mut_rate_str)) +
+#   geom_boxplot() 
+
+ggplot(filter(data, solution=="1" & update<=1000), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggsave("dir-sig-solutions.png", width=16, height=8)
+```
+
+```{r}
+mut_rates <- levels(factor(data$tag_mut_rate_str))
+metrics <- levels(factor(data$matchbin_metric))
+for (metric in metrics) {
+  for (mut_rate in mut_rates) {
+    print(paste("Metric:", metric, "Mutation rate:", mut_rate))
+    print(summary(filter(data, matchbin_metric==metric & tag_mut_rate_str==mut_rate)$aggregate_score))
+    print("=======")
+  }
+}
+
+best_mut_rates <- list()
+best_mut_rates["hamming"] = "1e-05"
+best_mut_rates["hash"] = "1e-04"
+best_mut_rates["integer"] = "0.001"
+best_mut_rates["integer-symmetric"] = "0.001"
+best_mut_rates["streak"] = "1e-04"
+best_mut_rates["streak-exact"] = "1e-04"
+
+best_mut_fot_data <- fot_data
+best_mut_data <- data
+
+metrics <- levels(fot_data$tag_metric)
+
+for (metric in metrics) {
+  best_mut_fot_data <- filter(best_mut_fot_data, 
+                              (tag_metric!=metric) |
+                              (tag_metric==metric & tag_mut_rate_str==best_mut_rates[[metric]]))
+  best_mut_data <- filter(best_mut_data, (matchbin_metric != metric) | 
+                                (tag_mut_rate_str == best_mut_rates[[metric]]))
+}
+
+```
+
+### Fitness over time by match metric
+```{r}
+
+ggplot(best_mut_data, aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
+  geom_boxplot() +
+  ggsave("time_to_solution_best_muts.pdf", width=21, height=8)
+
+ggplot(data, aes(x=matchbin_metric, y=update, fill=tag_mut_rate_str)) +
+  geom_boxplot() +
+  ggsave("time_to_solution_all.pdf", width=21, height=8)
+
+
+updates <- c(10, 30, 50, 100, 300, 500, 1000)
+plot_data <- filter(best_mut_fot_data, update %in% updates)
+plot_data$update <- factor(plot_data$update)
+ggplot(plot_data, aes(x=update, y=score, fill=tag_metric)) +
+  geom_boxplot() +
+  ggsave("score_over_time_box.pdf", width=21, height=8)
+  
+ggplot(filter(best_mut_fot_data), aes(x=update, y=score, color=tag_metric, fill=tag_metric)) +
+  # stat_summary(fun.data=mean_cl_boot, fun.args = list(conf.int=.95), geom="smooth", mapping=aes(group=tag_metric)) +
+  # stat_summary(fun.data = "mean_cl_boot", fun.args = list(conf.int=.50), geom="smooth") +
+  # geom_smooth(fun.data="mean_cl_boot") +
+  stat_summary(geom = "line", fun.y = mean) +
+  stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA)
+
+ggplot(filter(best_mut_fot_data, update <= 500), aes(x=update, y=score, color=tag_metric, fill=tag_metric)) +
+  # stat_summary(fun.data=mean_cl_boot, fun.args = list(conf.int=.95), geom="smooth", mapping=aes(group=tag_metric)) +
+  # stat_summary(fun.data = "mean_cl_boot", fun.args = list(conf.int=.50), geom="smooth") +
+  # geom_smooth(fun.data="mean_cl_boot") +
+  stat_summary(geom = "line", fun.y = mean) +
+  stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA)
+
+
+# geom_bar(stat="identity", position="dodge") +
+  # scale_x_discrete(limits=updates,
+  #                  breaks=updates) +
+  # stat_summary(fun.data=mean_cl_boot, fun.args = list(conf.int=.95), geom="smooth", mapping=aes(group=tag_metric)) +
+  # stat_summary(fun.data = "mean_cl_boot", fun.args = list(conf.int=.50), geom="smooth") +
+  # geom_smooth(fun.data="mean_cl_boot") +
+  # stat_summary(geom = "line", fun.y = mean) +
+  # stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA) +
+  # geom_point() +
+
+# plot_data <- fot_data
+# plot_data$update <- factor(fot_data$update)
+# ggplot(filter(plot_data, update %in% updates & tag_mut_rate_str =="1e-04" ), aes(x=update, y=score, color=tag_metric, fill=tag_metric)) +
+#   geom_bar(stat="identity", position="dodge") +
+#   ggsave("bar-over-time2.pdf", width=21, height=8)
+# 
+# ggplot(filter(fot_data, update <= 500 & tag_mut_rate_str =="1e-04"), aes(x=update, y=score, color=tag_metric, fill=tag_metric)) +
+#   # stat_summary(fun.data=mean_cl_boot, fun.args = list(conf.int=.95), geom="smooth", mapping=aes(group=tag_metric)) +
+#   # stat_summary(fun.data = "mean_cl_boot", fun.args = list(conf.int=.50), geom="smooth") +
+#   # geom_smooth(fun.data="mean_cl_boot") +
+#   stat_summary(geom = "line", fun.y = mean) +
+#   stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA) +
+#   # geom_point() +
+#   ggsave("./imgs/dir-sig-fot-1e-04.pdf", width=16, height=8) 
+```
+
+### Network analyses
+
+```{r}
+# todo - clean this up
+streak <- filter(data, matchbin_metric=="streak")$SEED
+streak_exact <- filter(data, matchbin_metric=="streak-exact")$SEED
+integer <- filter(data, matchbin_metric=="integer")$SEED
+integer_sym <- filter(data, matchbin_metric=="integer-symmetric")$SEED
+hash <- filter(data, matchbin_metric=="hash")$SEED
+hamming <- filter(data, matchbin_metric=="hamming")$SEED
+dir_sig_network_data$metric = NA
+dir_sig_network_data$mut_rate = NA
+networks <- dir_sig_network_data
+networks[networks$run_id %in% streak, "metric"] <- "streak"
+networks[networks$run_id %in% streak_exact, "metric"] <- "streak-exact"
+networks[networks$run_id %in% integer, "metric"] <- "integer"
+networks[networks$run_id %in% integer_sym, "metric"] <- "integer-symmetric"
+networks[networks$run_id %in% hash, "metric"] <- "hash"
+networks[networks$run_id %in% hamming, "metric"] <- "hamming"
+
+mut_rates <- factor(data$tag_mut_rate_str)
+for (mut_rate in mut_rates) {
+  seeds <- filter(data, tag_mut_rate_str==mut_rate)$SEED
+  networks[networks$run_id %in% seeds, "mut_rate"] <- mut_rate
+}
+
+# Extract successful runs (solution) of given mutation rate.
+dir_sig_solutions <- filter(data, solution=="1")
+# Isolate networks of successful runs.
+networks <- filter(networks,  
+                   run_id %in% dir_sig_solutions$SEED)
+
+ggplot(networks, aes(x=metric, fill=metric, y=graph_density)) +
+  geom_boxplot() +
+  facet_wrap(~mut_rate)
+
+```
