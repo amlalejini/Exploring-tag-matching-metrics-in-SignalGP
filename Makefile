@@ -7,13 +7,13 @@ EMP_DIR := ../Empirical/source
 SGP_DIR := ../SignalGP/source
 
 # Match metric options: hamming, integer, streak, hash, streak-exact
-MATCH_METRIC := hash
+MATCH_METRIC := streak
 # MATCH_THRESH options: 0, 25, 50, 75
-MATCH_THRESH := 25
+MATCH_THRESH := 0
 # MATCH_REG options: add, mult
 MATCH_REG := mult
 # TAG_NUM_BITS
-TAG_NUM_BITS := 64
+TAG_NUM_BITS := 32
 # combine it all into the executable name
 EXEC_NAME := $(PROJECT)_tag-len-$(TAG_NUM_BITS)_match-metric-$(MATCH_METRIC)_thresh-$(MATCH_THRESH)_reg-$(MATCH_REG)
 
