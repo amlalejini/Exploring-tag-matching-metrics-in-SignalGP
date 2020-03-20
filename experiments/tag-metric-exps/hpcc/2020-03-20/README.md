@@ -1,0 +1,28 @@
+# Exploratory experiments - 03-20-2020
+
+Purpose: compare performance of different tag-matching metrics. Use uniform population initialization,
+and parameterize mutation rates using Matthew's performance results.
+
+## Mutation rates by metric:
+
+From Matthew:
+
+```
+              Update Target Structure  Target Degree  Mutation Rate  seed  Maximum Fitness Target Configuration  Sum Fitness
+Metric
+Hamming            1          Regular              2           2.00  2400          0.34375            Regular 2    335.37500
+Hash               1          Regular              1           0.75  1000          0.31250            Regular 1    382.31250
+Integer            1          Regular              1           6.00  3400          0.31250            Regular 1    358.93750
+Integer (bi)       1          Regular              1           4.00  3000          0.37500            Regular 1    365.43750
+Streak             1          Regular              2           1.50  2000          0.34375            Regular 2    346.34375
+
+the mutation rate is per genome, so to get the per-bit mutation rate, divide by 1024
+```
+
+Translated:
+
+- Hamming: (2.00 / 1024) = 0.001953125
+- Hash: (0.75 / 1024) = 0.000732421875
+- Integer: (6.00 / 1024) = 0.005859375
+- Integer (bi): (4.00 / 1024) = 0.00390625
+- Streak: (1.50 / 1024) = 0.00146484375
