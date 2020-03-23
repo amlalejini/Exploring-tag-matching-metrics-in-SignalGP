@@ -1,0 +1,264 @@
+---
+title: "2020-03-20 experiments"
+output: 
+  html_document: 
+    keep_md: yes
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    collapsed: false
+    theme: default
+---
+
+### Load R libraries
+```{r, message=FALSE}
+library(tidyr)    # (Wickham & Henry, 2018)
+library(ggplot2)  # (Wickham, 2009)
+library(plyr)     # (Wickham, 2011)
+library(dplyr)    # (Wickham et al., 2018)
+library(cowplot)  # (Wilke, 2018)
+```
+
+### Extract max fit orgs data
+```{r}
+exp_name <- "2020-03-20"
+dst_data_loc <- paste("../data/",exp_name,"/dir-sig/max_fit_orgs.csv", sep="")
+dst_data <- read.csv(dst_data_loc, na.strings="NONE")
+
+
+dst_data$matchbin_metric <- factor(dst_data$matchbin_metric,
+                                   levels=c("hamming", 
+                                            "integer", 
+                                            "integer-symmetric", 
+                                            "hash", 
+                                            "streak", 
+                                            "streak-exact"))
+
+dst_data$tag_mut_rate <- as.numeric(dst_data$MUT_RATE__FUNC_TAG_BF)
+dst_data$tag_mut_rate_str <- factor(dst_data$tag_mut_rate)
+
+cst_data_loc <- paste("../data/",exp_name,"/chg-env/max_fit_orgs.csv", sep="")
+cst_data <- read.csv(cst_data_loc, na.strings="NONE")
+
+
+cst_data$matchbin_metric <- factor(cst_data$matchbin_metric,
+                                   levels=c("hamming", 
+                                            "integer", 
+                                            "integer-symmetric", 
+                                            "hash", 
+                                            "streak", 
+                                            "streak-exact"))
+
+cst_data$tag_mut_rate <- as.numeric(cst_data$MUT_RATE__FUNC_TAG_BF)
+cst_data$tag_mut_rate_str <- factor(cst_data$tag_mut_rate)
+
+
+rst_data_loc <- paste("../data/",exp_name,"/alt-sig/max_fit_orgs.csv", sep="")
+rst_data <- read.csv(rst_data_loc, na.strings="NONE")
+rst_data$matchbin_metric <- factor(rst_data$matchbin_metric,
+                                   levels=c("hamming", 
+                                            "integer", 
+                                            "integer-symmetric", 
+                                            "hash", 
+                                            "streak", 
+                                            "streak-exact"))
+
+rst_data$tag_mut_rate <- as.numeric(rst_data$MUT_RATE__FUNC_TAG_BF)
+rst_data$tag_mut_rate_str <- factor(rst_data$tag_mut_rate)
+
+
+```
+
+### Extract fitness over time data
+```{r}
+dst_fot_data_loc <- paste("../data/", exp_name, "/dir-sig/fot.csv", sep="")
+dst_fot_data <- read.csv(dst_fot_data_loc, na.strings="NONE")
+dst_fot_data$tag_metric <- factor(dst_fot_data$tag_metric,
+                                    levels=c("hamming", 
+                                             "integer", 
+                                             "integer-symmetric", 
+                                             "hash", 
+                                             "streak", 
+                                             "streak-exact"))
+dst_fot_data$tag_mut_rate <- as.numeric(dst_fot_data$tag_mut_rate)
+dst_fot_data$tag_mut_rate_str <- factor(dst_fot_data$tag_mut_rate)
+
+cst_fot_data_loc <- paste("../data/",exp_name,"/chg-env/fot.csv", sep="")
+cst_fot_data <- read.csv(cst_fot_data_loc, na.strings="NONE")
+cst_fot_data$matchbin_metric <- factor(cst_fot_data$matchbin_metric,
+                                    levels=c("hamming", 
+                                             "integer", 
+                                             "integer-symmetric", 
+                                             "hash", 
+                                             "streak", 
+                                             "streak-exact"))
+cst_fot_data$tag_mut_rate <- as.numeric(cst_fot_data$MUT_RATE__FUNC_TAG_BF)
+cst_fot_data$tag_mut_rate_str <- factor(cst_fot_data$MUT_RATE__FUNC_TAG_BF)
+
+rst_fot_data_loc <- paste("../data/",exp_name,"/alt-sig/fot.csv", sep="")
+rst_fot_data <- read.csv(rst_fot_data_loc, na.strings="NONE")
+rst_fot_data$matchbin_metric <- factor(rst_fot_data$matchbin_metric,
+                                    levels=c("hamming", 
+                                             "integer", 
+                                             "integer-symmetric", 
+                                             "hash", 
+                                             "streak", 
+                                             "streak-exact"))
+rst_fot_data$tag_mut_rate <- as.numeric(rst_fot_data$MUT_RATE__FUNC_TAG_BF)
+rst_fot_data$tag_mut_rate_str <- factor(rst_fot_data$MUT_RATE__FUNC_TAG_BF)
+```
+
+
+### Solution count by match metric
+
+Changing signal task
+
+```{r}
+ggplot(filter(dst_data, solution=="1"), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Directional signal task - solutions") +
+  ggsave(paste("./imgs/",exp_name,"/dst-solutions-5k.png",sep=""), width=16, height=8)
+
+ggplot(filter(dst_data, solution=="1" & update <= 250), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Directional signal task - solutions (250)") +
+  ylim(0, 105) +
+  ggsave(paste("./imgs/",exp_name,"/dst-solutions-250.png",sep=""), width=16, height=8)
+
+ggplot(filter(dst_data, solution=="1" & update <= 500), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Directional signal task - solutions (500)") +
+  ylim(0, 105) +
+  ggsave(paste("./imgs/",exp_name,"/dst-solutions-500.png",sep=""), width=16, height=8)
+
+ggplot(filter(dst_data, solution=="1" & update <= 750), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Directional signal task - solutions (750)") +
+  ylim(0, 105) +
+  ggsave(paste("./imgs/",exp_name,"/dst-solutions-750.png",sep=""), width=16, height=8)
+
+ggplot(filter(dst_data, solution=="1" & update <= 1000), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Directional signal task - solutions (1000)") +
+  ylim(0, 105)
+  ggsave(paste("./imgs/",exp_name,"/dst-solutions-1000.png",sep=""), width=16, height=8)
+
+ggplot(filter(dst_data, solution=="1" & update <= 2000), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Directional signal task - solutions") +
+  ylim(0, 105) +
+  ggsave(paste("./imgs/",exp_name,"/dst-solutions-2000.png",sep=""), width=16, height=8)
+
+ggplot(filter(dst_data), aes(x=matchbin_metric, y=update, fill=tag_mut_rate_str)) +
+  geom_boxplot() +
+  ggtitle("Directional signal task - time to solution") +
+  ggsave(paste("./imgs/",exp_name,"/dst-time-to-solutions.png",sep=""), width=16, height=8)
+  
+# Changing signal task
+
+ggplot(filter(cst_data, solution=="1"), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Changing signal task - solutions") +
+  ggsave(paste("./imgs/",exp_name,"/cst-solutions.png",sep=""), width=16, height=8)
+
+ggplot(filter(cst_data), aes(x=matchbin_metric, y=update, fill=tag_mut_rate_str)) +
+  geom_boxplot() +
+  ggtitle("Changing signal task - time to solution") +
+  ggsave(paste("./imgs/",exp_name,"/cst-time-to-solutions.png",sep=""), width=16, height=8)
+
+# Repeated signal task
+
+ggplot(filter(rst_data, solution=="1"), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Repeated signal task - solutions") +
+  ggsave(paste("./imgs/",exp_name,"/rst-solutions.png",sep=""), width=16, height=8)
+
+ggplot(filter(rst_data, solution=="1" & update<=500), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Repeated signal task - solutions (500)") +
+  ggsave(paste("./imgs/",exp_name,"/rst-solutions-500.png",sep=""), width=16, height=8)
+
+ggplot(filter(rst_data, solution=="1" & update<=300), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Repeated signal task - solutions (300)") +
+  ggsave(paste("./imgs/",exp_name,"/rst-solutions-300.png",sep=""), width=16, height=8)
+
+ggplot(filter(rst_data, solution=="1" & update<=100), aes(x=matchbin_metric, fill=tag_mut_rate_str)) +
+  geom_bar(stat="count", position="dodge") +
+  ggtitle("Repeated signal task - solutions (100)") +
+  ggsave(paste("./imgs/",exp_name,"/rst-solutions-100.png",sep=""), width=16, height=8)
+
+
+ggplot(filter(rst_data), aes(x=matchbin_metric, y=update, fill=tag_mut_rate_str)) +
+  geom_boxplot() +
+  ggtitle("Repeated signal task - time to solution") +
+  ggsave(paste("./imgs/",exp_name,"/rst-time-to-solutions.png",sep=""), width=16, height=8)
+
+
+
+```
+
+
+
+### Fitness over time by match metric
+
+Directional signal task 
+
+```{r}
+
+updates <- c(10, 30, 50, 100, 300, 500, 1000, 3000, 5000)
+plot_data <- filter(dst_fot_data, update %in% updates)
+plot_data$update <- factor(plot_data$update)
+
+ggplot(plot_data, aes(x=update, y=score, fill=tag_metric)) +
+  geom_boxplot() +
+  ggtitle("DST - score over time") +
+  ggsave(paste("./imgs/",exp_name,"/dst_score_over_time_box.pdf", sep=""), width=21, height=8)
+  
+ggplot(filter(dst_fot_data), aes(x=update, y=score, color=tag_metric, fill=tag_metric)) +
+  stat_summary(geom = "line", fun.y = mean) +
+  stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA) +
+  ggtitle("DST - score over time") +
+  ggsave(paste("./imgs/",exp_name,"/dst_score_over_time.pdf", sep=""), width=21, height=10)
+```
+
+Changing signal task
+
+```{r}
+updates <- c(10, 30, 50, 100, 300, 500, 1000)
+plot_data <- filter(cst_fot_data, update %in% updates)
+plot_data$update <- factor(plot_data$update)
+
+ggplot(plot_data, aes(x=update, y=score, fill=matchbin_metric)) +
+  geom_boxplot() +
+  ggtitle("CST - Score over time") +
+  ggsave(paste("./imgs/",exp_name,"/cst_score_over_time_box.pdf", sep=""), width=21, height=8)
+  
+ggplot(filter(cst_fot_data), aes(x=update, y=score, color=matchbin_metric, fill=matchbin_metric)) +
+  stat_summary(geom = "line", fun.y = mean) +
+  stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA) +
+  ggtitle("CST - Score over time") +
+  ggsave(paste("./imgs/",exp_name,"/cst_score_over_time.pdf", sep=""), width=21, height=10)
+```
+
+Repeated signal task
+
+```{r}
+updates <- c(10, 30, 50, 100, 300, 500, 1000, 3000, 5000)
+plot_data <- filter(rst_fot_data, update %in% updates)
+plot_data$update <- factor(plot_data$update)
+
+ggplot(plot_data, aes(x=update, y=score, fill=matchbin_metric)) +
+  geom_boxplot() +
+  ggtitle("RST - Score over time") +
+  ggsave(paste("./imgs/",exp_name,"/rst_score_over_time_box.pdf", sep=""), width=21, height=8)
+  
+ggplot(filter(rst_fot_data), aes(x=update, y=score, color=matchbin_metric, fill=matchbin_metric)) +
+  stat_summary(geom = "line", fun.y = mean) +
+  stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA) +
+  ggtitle("RST - Score over time") +
+  ggsave(paste("./imgs/",exp_name,"/rst_score_over_time.pdf", sep=""), width=21, height=10)
+```
+
+
+
