@@ -102,8 +102,8 @@ else
 fi
 
 # Set tag mutation rates!
-MUT_RATE__INST_TAG_BF=${TAG_MUT_RATE}
-MUT_RATE__FUNC_TAG_BF=${TAG_MUT_RATE}
+MUT_RATE__INST_TAG_BF=0.${TAG_MUT_RATE}
+MUT_RATE__FUNC_TAG_BF=0.${TAG_MUT_RATE}
 
 EXEC=${WORLD}_tag-len-${TAG_LEN}_match-metric-${MATCH_METRIC}_thresh-${MATCH_THRESH}_reg-${REGULATOR_TYPE}
 
