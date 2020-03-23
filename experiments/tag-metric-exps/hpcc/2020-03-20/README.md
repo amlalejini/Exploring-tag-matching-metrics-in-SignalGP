@@ -26,3 +26,20 @@ Translated:
 - Integer: (6.00 / 1024) = 0.005859375
 - Integer (bi): (4.00 / 1024) = 0.00390625
 - Streak: (1.50 / 1024) = 0.00146484375
+
+## Results
+
+- Graphs: [analysis/imgs](https://github.com/amlalejini/Exploring-tag-matching-metrics-in-SignalGP/tree/master/experiments/tag-metric-exps/analysis/imgs/2020-03-20)
+- [web page](http://lalejini.com/Exploring-tag-matching-metrics-in-SignalGP/experiments/tag-metric-exps/analysis/2020-03-20.html)
+
+We see a performance difference between metrics using these mutation rates.
+
+Next steps:
+
+- Mutation sweep for each metric, compare all at best rates.
+  - Expectations:
+    - Difference in performance:
+      - Effect goes away, in which case picking the best mutation rate for your metric is very
+        important
+      - Or, smaller effect
+    - Robustness to mutations: Some metrics will be better across a wider range of rates.
