@@ -1,0 +1,247 @@
+---
+title: "2020-03-20 experiments"
+output: 
+  html_document: 
+    keep_md: no
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    collapsed: false
+    theme: default
+---
+
+## Setup
+
+### Load R libraries
+
+```{r, message=FALSE}
+library(tidyr)    # (Wickham & Henry, 2018)
+library(ggplot2)  # (Wickham, 2009)
+library(plyr)     # (Wickham, 2011)
+library(dplyr)    # (Wickham et al., 2018)
+library(cowplot)  # (Wilke, 2018)
+```
+
+## Load data
+
+### Extract most performant organisms
+
+```{r}
+
+extract_max_fit <- function(data_path) {
+  data <- read.csv(data_path, na.strings="NONE")
+  data$matchbin_metric <- factor(data$matchbin_metric,
+                                  levels=c("hamming", 
+                                           "integer", 
+                                            "integer-symmetric", 
+                                            "hash", 
+                                            "streak", 
+                                            "streak-exact"))
+  data$tag_mut_rate <- factor(as.numeric(data$MUT_RATE__FUNC_TAG_BF))
+  return(data)
+}
+
+exp_name <- "2020-03-23"
+dst_data_loc <- paste("../data/",exp_name,"/dir-sig/max_fit_orgs.csv", sep="")
+dst_data <- extract_max_fit(dst_data_loc)
+cst_data_loc <- paste("../data/",exp_name,"/chg-env/max_fit_orgs.csv", sep="")
+cst_data <- extract_max_fit(cst_data_loc)
+
+num_replicates <- 50
+```
+
+### Extract fitness over time
+
+```{r}
+dst_fot_data_loc <- paste("../data/", exp_name, "/dir-sig/fot.csv", sep="")
+dst_fot_data <- read.csv(dst_fot_data_loc, na.strings="NONE")
+dst_fot_data$tag_metric <- factor(dst_fot_data$tag_metric,
+                                    levels=c("hamming", 
+                                             "integer", 
+                                             "integer-symmetric", 
+                                             "hash", 
+                                             "streak", 
+                                             "streak-exact"))
+dst_fot_data$tag_mut_rate <- factor(as.numeric(dst_fot_data$tag_mut_rate))
+
+cst_fot_data_loc <- paste("../data/",exp_name,"/chg-env/fot.csv", sep="")
+cst_fot_data <- read.csv(cst_fot_data_loc, na.strings="NONE")
+cst_fot_data$matchbin_metric <- factor(cst_fot_data$matchbin_metric,
+                                    levels=c("hamming", 
+                                             "integer", 
+                                             "integer-symmetric", 
+                                             "hash", 
+                                             "streak", 
+                                             "streak-exact"))
+cst_fot_data$tag_mut_rate <- factor(as.numeric(cst_fot_data$MUT_RATE__FUNC_TAG_BF))
+```
+
+## All Mutation Rates
+
+### Solutions x Condition
+
+Directional Signal Task
+
+```{r}
+generation_cutoffs <- c(500, 1000, 3000, 5000)
+exp_prefix <- "dst"
+for (gen in generation_cutoffs) {
+  ggplot(filter(dst_data, solution=="1" & update <= gen), aes(x=tag_mut_rate, fill=tag_mut_rate)) +
+    geom_bar(stat="count", position="dodge") +
+    geom_text(stat="count", 
+            mapping=aes(label=..count..), 
+            position=position_dodge(0.9), vjust=0) +
+    ggtitle(paste("Directional signal task - solutions\n","<= ", gen, sep="")) +
+    facet_wrap(~ matchbin_metric) +
+    ylim(0, num_replicates+2) +
+    ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
+}
+```
+
+Changing Signal Task
+
+```{r}
+generation_cutoffs <- c(50, 100, 500, 1000, 3000, 5000)
+exp_prefix <- "cst"
+for (gen in generation_cutoffs) {
+  ggplot(filter(cst_data, solution=="1" & update <= gen), aes(x=tag_mut_rate, fill=tag_mut_rate)) +
+    geom_bar(stat="count", position="dodge") +
+    geom_text(stat="count", 
+            mapping=aes(label=..count..), 
+            position=position_dodge(0.9), vjust=0) +
+    ggtitle(paste("Changing signal task - solutions\n","<= ", gen, sep="")) +
+    facet_wrap(~ matchbin_metric) +
+    ylim(0, num_replicates+2) +
+    ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
+}
+```
+
+### Score x Condition
+
+Directional Signal Task
+
+```{r}
+generation_cutoffs <- c(5000)
+exp_prefix <- "dst"
+for (gen in generation_cutoffs) {
+  ggplot(dst_data, aes(x=tag_mut_rate, y=aggregate_score, fill=tag_mut_rate)) +
+    geom_boxplot() +
+    ggtitle(paste("Directional signal task - score\n","<= ", gen, sep="")) +
+    facet_wrap(~ matchbin_metric) +
+    ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-scores-",gen,".png",sep=""), width=16, height=8)
+}
+```
+
+Changing Signal Task
+
+```{r}
+generation_cutoffs <- c(5000)
+exp_prefix <- "cst"
+for (gen in generation_cutoffs) {
+  ggplot(cst_data, aes(x=tag_mut_rate, y=score, fill=tag_mut_rate)) +
+    geom_boxplot() +
+    ggtitle(paste("Changing signal task - score\n","<= ", gen, sep="")) +
+    facet_wrap(~ matchbin_metric) +
+    ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-scores-",gen,".png",sep=""), width=16, height=8)
+}
+```
+
+### Time to solution x Condition
+
+```{r}
+generation_cutoffs <- c(5000)
+exp_prefix <- "dst"
+for (gen in generation_cutoffs) {
+  ggplot(dst_data, aes(x=tag_mut_rate, y=update, fill=tag_mut_rate)) +
+    geom_boxplot() +
+    ggtitle(paste("Directional signal task - time to solution\n","<= ", gen, sep="")) +
+    facet_wrap(~ matchbin_metric) +
+    ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-time--to-solution-",gen,".png",sep=""), width=16, height=8)
+}
+```
+
+```{r}
+generation_cutoffs <- c(5000)
+exp_prefix <- "cst"
+for (gen in generation_cutoffs) {
+  ggplot(cst_data, aes(x=tag_mut_rate, y=update, fill=tag_mut_rate)) +
+    geom_boxplot() +
+    ggtitle(paste("Changing signal task - time to solution\n","<= ", gen, sep="")) +
+    facet_wrap(~ matchbin_metric) +
+    ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-time--to-solution-",gen,".png",sep=""), width=16, height=8)
+}
+```
+
+## Best mutation rates
+
+Mutation rates as determined by Matthew's experiments:
+
+- Hamming: (2.00 / 1024) = 0.001953125
+  - Expectation: [0.001:0.002]
+- Hash: (0.75 / 1024) = 0.000732421875
+  - Expectation: [0.0005:0.001]
+- Integer: (6.00 / 1024) = 0.005859375
+  - Expectation: [0.005:0.01]
+- Integer (bi): (4.00 / 1024) = 0.00390625
+  - Expectation: [0.002:0.005]
+- Streak: (1.50 / 1024) = 0.00146484375
+  - Expectation: [0.001:0.002]
+  
+### Directional signal task
+
+```{r}
+mut_rates <- levels(factor(dst_data$tag_mut_rate))
+metrics <- levels(factor(dst_data$matchbin_metric))
+for (metric in metrics) {
+  print(paste("------------", metric, "------------"))
+  for (mut_rate in mut_rates) {
+    print(paste("Metric:", metric, "Mutation rate:", mut_rate))
+    scores <- filter(dst_data,
+                         matchbin_metric==metric & 
+                           tag_mut_rate==mut_rate)$aggregate_score
+    print(summary(scores))
+    print("=======")
+  }
+}
+```
+
+Mutation rate results:
+
+- Hamming
+  - By solution count: 0.001
+  - By median: 5e-04, 0.001, 0.002
+  - By mean: 0.002
+- Hash
+  - By solution count: 0.001
+  - By median: 0.001
+  - By mean: 0.001
+- Integer
+  - By solution count: 0.002
+  - By median: 5e-04, 0.002, 0.005
+  - By mean: 0.005
+- Integer-symmetric
+  - By solution count: 0.0002
+  - By median: 5e-04, 0.002, 0.005, 0.01
+  - By mean: 0.01
+- Streak
+  - By solution count: 0.001, 0.002
+  - By median: 2e-04, 5e-04, 0.001, 0.002
+  - By mean: 0.002
+  
+### Changing-signal task
+
+```{r}
+mut_rates <- levels(factor(cst_data$tag_mut_rate))
+metrics <- levels(factor(cst_data$matchbin_metric))
+for (metric in metrics) {
+  print(paste("------------", metric, "------------"))
+  for (mut_rate in mut_rates) {
+    print(paste("Metric:", metric, "Mutation rate:", mut_rate))
+    scores <- filter(cst_data,
+                         matchbin_metric==metric & 
+                           tag_mut_rate==mut_rate)$score
+    print(summary(scores))
+    print("=======")
+  }
+}
+```
