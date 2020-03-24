@@ -55,10 +55,12 @@ def main():
     parser.add_argument("--data", type=str, nargs="+", help="Where should we pull data (one or more locations)?")
     parser.add_argument("--dump", type=str, help="Where to dump this?", default=".")
     parser.add_argument("--out_fname", type=str, help="What should we call the output file?", default="max_fit_orgs.csv")
+    parser.add_argument("--update", type=int, default=-1, help="What is the maximum update we should pull organisms from?")
     args = parser.parse_args()
     data_dirs = args.data
     dump_dir = args.dump
     dump_fname = args.out_fname
+    update_cap = args.update
     # Are all data directories for real?
     if any([not os.path.exists(loc) for loc in data_dirs]):
         print("Unable to locate all data directories. Able to locate:", {loc: os.path.exists(loc) for loc in data_dirs})
@@ -96,9 +98,15 @@ def main():
             exit(-1)
         # Find the best organism
         best_org_id = 0
-        for i in range(len(orgs)):
-            if float(orgs[i][header_lu["score"]]) > float(orgs[best_org_id][header_lu["score"]]):
-                best_org_id = i
+        if update_cap == -1:
+            for i in range(len(orgs)):
+                if float(orgs[i][header_lu["score"]]) > float(orgs[best_org_id][header_lu["score"]]):
+                    best_org_id = i
+        else:
+            for i in range(len(orgs)):
+                if orgs[i][header_lu["update"]] > update_cap: continue # ignore max fit orgs from prior to update cap
+                if float(orgs[i][header_lu["score"]]) > float(orgs[best_org_id][header_lu["score"]]):
+                    best_org_id = i
         # Guarantee header uniqueness
         header_set.add(",".join([key for key in key_settings] + header))
         if len(header_set) > 1:
