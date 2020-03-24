@@ -94,6 +94,7 @@ for (gen in generation_cutoffs) {
     ggtitle(paste("Directional signal task - solutions\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
     ylim(0, num_replicates+2) +
+    theme(axis.text.x=element_text(size=8,angle=90)) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
   print(p)
 }
@@ -113,6 +114,7 @@ for (gen in generation_cutoffs) {
     ggtitle(paste("Changing signal task - solutions\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
     ylim(0, num_replicates+2) +
+    theme(axis.text.x=element_text(size=8,angle=90)) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
   print(p)
 }
@@ -130,6 +132,7 @@ for (gen in generation_cutoffs) {
     geom_boxplot() +
     ggtitle(paste("Directional signal task - score\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
+    theme(axis.text.x=element_text(size=8,angle=90)) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-scores-",gen,".png",sep=""), width=16, height=8)
   print(p)
 }
@@ -145,6 +148,7 @@ for (gen in generation_cutoffs) {
     geom_boxplot() +
     ggtitle(paste("Changing signal task - score\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
+    theme(axis.text.x=element_text(size=8,angle=90)) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-scores-",gen,".png",sep=""), width=16, height=8)
   print(p)
 }
@@ -160,6 +164,7 @@ for (gen in generation_cutoffs) {
     geom_boxplot() +
     ggtitle(paste("Directional signal task - time to solution\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
+    theme(axis.text.x=element_text(size=8,angle=90)) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-time--to-solution-",gen,".png",sep=""), width=16, height=8)
   print(p)
 }
@@ -173,6 +178,7 @@ for (gen in generation_cutoffs) {
     geom_boxplot() +
     ggtitle(paste("Changing signal task - time to solution\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
+    theme(axis.text.x=element_text(size=8,angle=90)) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-time--to-solution-",gen,".png",sep=""), width=16, height=8)
   print(p)
 }
