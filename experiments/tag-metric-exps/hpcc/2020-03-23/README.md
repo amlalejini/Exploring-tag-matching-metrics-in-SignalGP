@@ -22,6 +22,209 @@ Do we still see difference in performance if we tune mutation rates for each tas
   - 0.0002
 - Replicates: 50?
 
+#### Directional signal - mutation rate results
+
+- Hamming
+  - By solution count: **0.001**
+  - By median: 5e-04, 0.001, 0.002
+  - By mean: 0.002
+- Hash
+  - By solution count: **0.001**
+  - By median: 0.001
+  - By mean: 0.001
+- Integer
+  - By solution count: **0.002**
+  - By median: 5e-04, 0.002, 0.005
+  - By mean: 0.005
+- Integer-symmetric
+  - By solution count: **0.0001**
+  - By median: 5e-04, 0.002, 0.005, 0.01
+  - By mean: 0.01
+- Streak
+  - By solution count: 0.001, **0.002**
+  - By median: 2e-04, 5e-04, 0.001, 0.002
+  - By mean: 0.002
+
+```
+[1] "------------ hamming ------------"
+[1] "Metric: hamming Mutation rate: 2e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   40.0    56.0    61.0    59.1    64.0    64.0
+[1] "======="
+[1] "Metric: hamming Mutation rate: 5e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  43.00   56.00   64.00   59.58   64.00   64.00
+[1] "======="
+[1] "Metric: hamming Mutation rate: 0.001"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  42.00   57.00   64.00   60.36   64.00   64.00
+[1] "======="
+[1] "Metric: hamming Mutation rate: 0.002"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   49.0    60.0    64.0    60.5    64.0    64.0
+[1] "======="
+[1] "Metric: hamming Mutation rate: 0.005"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  36.00   49.00   56.00   54.54   60.00   64.00
+[1] "======="
+[1] "Metric: hamming Mutation rate: 0.01"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  32.00   43.00   46.00   47.66   56.00   64.00
+[1] "======="
+[1] "Metric: hamming Mutation rate: 0.02"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  32.00   36.00   42.00   40.92   46.00   52.00
+[1] "======="
+
+[1] "------------ integer ------------"
+[1] "Metric: integer Mutation rate: 2e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  15.00   40.00   49.00   46.16   60.00   64.00
+[1] "======="
+[1] "Metric: integer Mutation rate: 5e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  15.00   45.25   56.00   49.82   63.50   64.00
+[1] "======="
+[1] "Metric: integer Mutation rate: 0.001"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+     15      45      51      50      60      64
+[1] "======="
+[1] "Metric: integer Mutation rate: 0.002"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  24.00   45.25   56.00   51.22   64.00   64.00
+[1] "======="
+[1] "Metric: integer Mutation rate: 0.005"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  18.00   46.00   56.00   51.74   59.00   64.00
+[1] "======="
+[1] "Metric: integer Mutation rate: 0.01"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   24.0    45.0    49.0    49.1    56.0    64.0
+[1] "======="
+[1] "Metric: integer Mutation rate: 0.02"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  34.00   45.00   46.00   48.34   54.25   64.00
+[1] "======="
+
+[1] "------------ integer-symmetric ------------"
+[1] "Metric: integer-symmetric Mutation rate: 2e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  18.00   46.00   46.00   48.92   63.00   64.00
+[1] "======="
+[1] "Metric: integer-symmetric Mutation rate: 5e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  24.00   46.00   56.00   53.06   60.00   64.00
+[1] "======="
+[1] "Metric: integer-symmetric Mutation rate: 0.001"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   15.0    46.0    55.5    51.4    56.0    64.0
+[1] "======="
+[1] "Metric: integer-symmetric Mutation rate: 0.002"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  28.00   46.00   56.00   52.34   56.00   64.00
+[1] "======="
+[1] "Metric: integer-symmetric Mutation rate: 0.005"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  30.00   46.00   56.00   52.30   62.75   64.00
+[1] "======="
+[1] "Metric: integer-symmetric Mutation rate: 0.01"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  30.00   49.25   56.00   54.32   60.75   64.00
+[1] "======="
+[1] "Metric: integer-symmetric Mutation rate: 0.02"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  30.00   45.00   46.00   46.98   54.00   57.00
+[1] "======="
+
+[1] "------------ hash ------------"
+[1] "Metric: hash Mutation rate: 2e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  36.00   50.00   56.00   56.06   64.00   64.00
+[1] "======="
+[1] "Metric: hash Mutation rate: 5e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   38.0    52.0    60.0    57.4    64.0    64.0
+[1] "======="
+[1] "Metric: hash Mutation rate: 0.001"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   36.0    56.0    61.5    58.8    64.0    64.0
+[1] "======="
+[1] "Metric: hash Mutation rate: 0.002"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  36.00   49.00   56.00   55.26   64.00   64.00
+[1] "======="
+[1] "Metric: hash Mutation rate: 0.005"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  36.00   38.25   46.00   45.16   48.00   56.00
+[1] "======="
+[1] "Metric: hash Mutation rate: 0.01"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  30.00   30.00   31.00   32.88   36.00   36.00
+[1] "======="
+[1] "Metric: hash Mutation rate: 0.02"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  16.00   24.00   26.00   25.52   27.00   30.00
+[1] "======="
+
+[1] "------------ streak ------------"
+[1] "Metric: streak Mutation rate: 2e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  43.00   63.25   64.00   61.06   64.00   64.00
+[1] "======="
+[1] "Metric: streak Mutation rate: 5e-04"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  46.00   61.00   64.00   61.62   64.00   64.00
+[1] "======="
+[1] "Metric: streak Mutation rate: 0.001"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   36.0    64.0    64.0    61.1    64.0    64.0
+[1] "======="
+[1] "Metric: streak Mutation rate: 0.002"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  30.00   64.00   64.00   61.76   64.00   64.00
+[1] "======="
+[1] "Metric: streak Mutation rate: 0.005"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  36.00   56.00   56.00   56.98   64.00   64.00
+[1] "======="
+[1] "Metric: streak Mutation rate: 0.01"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  36.00   43.00   46.00   46.98   52.00   59.00
+[1] "======="
+[1] "Metric: streak Mutation rate: 0.02"
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  30.00   36.00   42.00   40.64   45.00   49.00
+[1] "======="
+```
+
+#### Changing signal - mutation rate results
+
+After 100 updates
+
+- Hamming
+  - By solution count: 0.01
+  - By median:
+  - By mean:
+- Hash
+  - By solution count: 0.002
+  - By median:
+  - By mean:
+- Integer
+  - By solution count: 0.02
+  - By median:
+  - By mean:
+- Integer-symmetric
+  - By solution count: 0.02
+  - By median:
+  - By mean:
+- Streak
+  - By solution count: 0.01
+  - By median:
+  - By mean:
+
+```
+```
+
 ### Next-step runs:
 
 - Goal: compare performance of each at best found rates
