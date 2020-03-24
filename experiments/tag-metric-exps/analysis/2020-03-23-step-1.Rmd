@@ -86,7 +86,7 @@ Directional Signal Task
 generation_cutoffs <- c(500, 1000, 3000, 5000)
 exp_prefix <- "dst"
 for (gen in generation_cutoffs) {
-  ggplot(filter(dst_data, solution=="1" & update <= gen), aes(x=tag_mut_rate, fill=tag_mut_rate)) +
+  p <- ggplot(filter(dst_data, solution=="1" & update <= gen), aes(x=tag_mut_rate, fill=tag_mut_rate)) +
     geom_bar(stat="count", position="dodge") +
     geom_text(stat="count", 
             mapping=aes(label=..count..), 
@@ -95,6 +95,7 @@ for (gen in generation_cutoffs) {
     facet_wrap(~ matchbin_metric) +
     ylim(0, num_replicates+2) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
+  print(p)
 }
 ```
 
@@ -104,7 +105,7 @@ Changing Signal Task
 generation_cutoffs <- c(50, 100, 500, 1000, 3000, 5000)
 exp_prefix <- "cst"
 for (gen in generation_cutoffs) {
-  ggplot(filter(cst_data, solution=="1" & update <= gen), aes(x=tag_mut_rate, fill=tag_mut_rate)) +
+  p <- ggplot(filter(cst_data, solution=="1" & update <= gen), aes(x=tag_mut_rate, fill=tag_mut_rate)) +
     geom_bar(stat="count", position="dodge") +
     geom_text(stat="count", 
             mapping=aes(label=..count..), 
@@ -113,6 +114,7 @@ for (gen in generation_cutoffs) {
     facet_wrap(~ matchbin_metric) +
     ylim(0, num_replicates+2) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
+  print(p)
 }
 ```
 
@@ -124,11 +126,12 @@ Directional Signal Task
 generation_cutoffs <- c(5000)
 exp_prefix <- "dst"
 for (gen in generation_cutoffs) {
-  ggplot(dst_data, aes(x=tag_mut_rate, y=aggregate_score, fill=tag_mut_rate)) +
+  p <- ggplot(dst_data, aes(x=tag_mut_rate, y=aggregate_score, fill=tag_mut_rate)) +
     geom_boxplot() +
     ggtitle(paste("Directional signal task - score\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-scores-",gen,".png",sep=""), width=16, height=8)
+  print(p)
 }
 ```
 
@@ -138,11 +141,12 @@ Changing Signal Task
 generation_cutoffs <- c(5000)
 exp_prefix <- "cst"
 for (gen in generation_cutoffs) {
-  ggplot(cst_data, aes(x=tag_mut_rate, y=score, fill=tag_mut_rate)) +
+  p <- ggplot(cst_data, aes(x=tag_mut_rate, y=score, fill=tag_mut_rate)) +
     geom_boxplot() +
     ggtitle(paste("Changing signal task - score\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-scores-",gen,".png",sep=""), width=16, height=8)
+  print(p)
 }
 ```
 
@@ -152,11 +156,12 @@ for (gen in generation_cutoffs) {
 generation_cutoffs <- c(5000)
 exp_prefix <- "dst"
 for (gen in generation_cutoffs) {
-  ggplot(dst_data, aes(x=tag_mut_rate, y=update, fill=tag_mut_rate)) +
+  p <- ggplot(dst_data, aes(x=tag_mut_rate, y=update, fill=tag_mut_rate)) +
     geom_boxplot() +
     ggtitle(paste("Directional signal task - time to solution\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-time--to-solution-",gen,".png",sep=""), width=16, height=8)
+  print(p)
 }
 ```
 
@@ -164,11 +169,12 @@ for (gen in generation_cutoffs) {
 generation_cutoffs <- c(5000)
 exp_prefix <- "cst"
 for (gen in generation_cutoffs) {
-  ggplot(cst_data, aes(x=tag_mut_rate, y=update, fill=tag_mut_rate)) +
+  p <- ggplot(cst_data, aes(x=tag_mut_rate, y=update, fill=tag_mut_rate)) +
     geom_boxplot() +
     ggtitle(paste("Changing signal task - time to solution\n","<= ", gen, sep="")) +
     facet_wrap(~ matchbin_metric) +
     ggsave(paste("./imgs/",exp_name,"/", exp_prefix, "-time--to-solution-",gen,".png",sep=""), width=16, height=8)
+  print(p)
 }
 ```
 
