@@ -104,7 +104,7 @@ def main():
                     best_org_id = i
         else:
             for i in range(len(orgs)):
-                if orgs[i][header_lu["update"]] > update_cap: continue # ignore max fit orgs from prior to update cap
+                if int(orgs[i][header_lu["update"]]) > update_cap: continue # ignore max fit orgs from prior to update cap
                 if float(orgs[i][header_lu["score"]]) > float(orgs[best_org_id][header_lu["score"]]):
                     best_org_id = i
         # Guarantee header uniqueness
