@@ -44,7 +44,7 @@ extract_max_fit <- function(data_path) {
 exp_name <- "2020-03-23"
 dst_data_loc <- paste("../data/",exp_name,"/dir-sig/max_fit_orgs.csv", sep="")
 dst_data <- extract_max_fit(dst_data_loc)
-cst_data_loc <- paste("../data/",exp_name,"/chg-env/max_fit_orgs.csv", sep="")
+cst_data_loc <- paste("../data/",exp_name,"/chg-env/max_fit_orgs_100.csv", sep="")
 cst_data <- extract_max_fit(cst_data_loc)
 
 num_replicates <- 50
@@ -109,7 +109,7 @@ Changing Signal Task
 ```{r}
 mut_rates <- levels(factor(cst_data$tag_mut_rate))
 metrics <- levels(factor(cst_data$matchbin_metric))
-generation_cutoffs <- c(50, 100, 500, 1000, 3000, 5000)
+generation_cutoffs <- c(50, 100)
 exp_prefix <- "cst"
 for (gen in generation_cutoffs) {
   p <- ggplot(filter(cst_data, solution=="1" & update <= gen), aes(x=tag_mut_rate, fill=tag_mut_rate)) +
@@ -155,7 +155,7 @@ Changing Signal Task
 ```{r}
 mut_rates <- levels(factor(cst_data$tag_mut_rate))
 metrics <- levels(factor(cst_data$matchbin_metric))
-generation_cutoffs <- c(5000)
+generation_cutoffs <- c(100)
 exp_prefix <- "cst"
 for (gen in generation_cutoffs) {
   p <- ggplot(cst_data, aes(x=tag_mut_rate, y=score, fill=tag_mut_rate)) +
@@ -193,7 +193,7 @@ for (gen in generation_cutoffs) {
 ```{r}
 mut_rates <- levels(factor(cst_data$tag_mut_rate))
 metrics <- levels(factor(cst_data$matchbin_metric))
-generation_cutoffs <- c(5000)
+generation_cutoffs <- c(100)
 exp_prefix <- "cst"
 for (gen in generation_cutoffs) {
   p <- ggplot(cst_data, aes(x=tag_mut_rate, y=update, fill=tag_mut_rate)) +
