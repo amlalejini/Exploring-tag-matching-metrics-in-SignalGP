@@ -65,8 +65,6 @@ rst_data$matchbin_metric <- factor(rst_data$matchbin_metric,
 
 rst_data$tag_mut_rate <- as.numeric(rst_data$MUT_RATE__FUNC_TAG_BF)
 rst_data$tag_mut_rate_str <- factor(rst_data$tag_mut_rate)
-
-
 ```
 
 ### Extract fitness over time data

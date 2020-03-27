@@ -44,8 +44,8 @@ exp_name <- "2020-03-23"
 out_dir <- "2020-03-23-step-2"
 dst_data_loc <- paste("../data/",exp_name,"/step-two/dir-sig/max_fit_orgs.csv", sep="")
 dst_data <- extract_max_fit(dst_data_loc)
-# cst_data_loc <- paste("../data/",exp_name,"/step-two/chg-env/max_fit_orgs_100.csv", sep="")
-# cst_data <- extract_max_fit(cst_data_loc)
+cst_data_loc <- paste("../data/",exp_name,"/step-two/chg-env/max_fit_orgs.csv", sep="")
+cst_data <- extract_max_fit(cst_data_loc)
 
 num_replicates <- 200
 ```
@@ -64,16 +64,16 @@ dst_fot_data$tag_metric <- factor(dst_fot_data$tag_metric,
                                              "streak-exact"))
 dst_fot_data$tag_mut_rate <- factor(as.numeric(dst_fot_data$tag_mut_rate))
 
-# cst_fot_data_loc <- paste("../data/",exp_name,"/chg-env/fot.csv", sep="")
-# cst_fot_data <- read.csv(cst_fot_data_loc, na.strings="NONE")
-# cst_fot_data$matchbin_metric <- factor(cst_fot_data$matchbin_metric,
-#                                     levels=c("hamming", 
-#                                              "integer", 
-#                                              "integer-symmetric", 
-#                                              "hash", 
-#                                              "streak", 
-#                                              "streak-exact"))
-# cst_fot_data$tag_mut_rate <- factor(as.numeric(cst_fot_data$MUT_RATE__FUNC_TAG_BF))
+cst_fot_data_loc <- paste("../data/",exp_name,"/step-two/chg-env/fot.csv", sep="")
+cst_fot_data <- read.csv(cst_fot_data_loc, na.strings="NONE")
+cst_fot_data$matchbin_metric <- factor(cst_fot_data$matchbin_metric,
+                                    levels=c("hamming",
+                                             "integer",
+                                             "integer-symmetric",
+                                             "hash",
+                                             "streak",
+                                             "streak-exact"))
+cst_fot_data$tag_mut_rate <- factor(as.numeric(cst_fot_data$MUT_RATE__FUNC_TAG_BF))
 ```
 
 ## Directional Signal Task
@@ -94,6 +94,78 @@ for (gen in generation_cutoffs) {
     theme(axis.text.x=element_text(size=8)) +
     ggsave(paste("./imgs/",out_dir,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
   print(p)
+}
+```
+
+Compare each metric's successes using Fisher's exact.
+
+```{r}
+do_ft <- function(metric_a, metric_b, n) {
+  a_successes <- 
+    nrow(filter(dst_data, matchbin_metric==metric_a & solution=="1"))
+  b_successes <- 
+    nrow(filter(dst_data, matchbin_metric==metric_b & solution=="1"))
+  table <-
+    matrix(c(a_successes, 
+             b_successes,
+             n-a_successes,
+             n-b_successes),
+           nrow=2)
+  rownames(table) <- c(metric_a, metric_b)
+  colnames(table) <- c("success", "fail")
+  ft <- fisher.test(table)
+  return(ft)
+}
+
+# hamming_integer
+hamming_integer_ft <- 
+  do_ft("hamming", "integer", num_replicates)
+# hamming_integer_sym
+hamming_integer_sym_ft <- 
+  do_ft("hamming", "integer-symmetric", num_replicates)
+# hamming_hash
+hamming_hash_ft <- 
+  do_ft("hamming", "hash", num_replicates)
+# hamming_streak
+hamming_streak_ft <- 
+  do_ft("hamming", "streak", num_replicates)
+# streak_integer
+streak_integer_ft <- 
+  do_ft("streak", "integer", num_replicates)
+# streak_integer_sym
+streak_integer_sym_ft <- 
+  do_ft("streak", "integer-symmetric", num_replicates)
+# streak_hash
+streak_hash_ft <- 
+  do_ft("streak", "hash", num_replicates)
+# hash_integer
+hash_integer_ft <- 
+  do_ft("hash", "integer", num_replicates)
+# hash_integer_sym
+hash_integer_sym_ft <- 
+  do_ft("hash", "integer-symmetric", num_replicates)
+# integer_integer_sym
+integer_integer_sym_ft <- 
+  do_ft("integer", "integer-symmetric", num_replicates)
+
+p_values <- list(hamming_v_integer = hamming_integer_ft$p.value,
+                 hamming_v_integer_sym = hamming_integer_sym_ft$p.value,
+                 hamming_v_hash = hamming_hash_ft$p.value,
+                 hamming_v_streak = hamming_streak_ft$p.value,
+                 streak_v_integer = streak_integer_ft$p.value,
+                 streak_v_integer_sym = streak_integer_sym_ft$p.value,
+                 streak_v_hash = streak_hash_ft$p.value,
+                 hash_v_integer = hash_integer_ft$p.value,
+                 hash_v_integer_sym = hash_integer_sym_ft$p.value,
+                 integer_v_integer_sym = integer_integer_sym_ft$p.value)
+adjusted <- p.adjust(p_values,
+                     method="bonferroni")
+
+for (key in names(adjusted)) {
+  print(paste("Comparison: ", key, sep=""))
+  adjusted_p <- adjusted[[key]]
+  print(paste("  adjusted p value: ", adjusted_p, sep=""))
+  if (adjusted_p < 0.05) { print("  *significant") }
 }
 ```
 
@@ -120,6 +192,62 @@ p <- ggplot(dst_data, aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
     theme(axis.text.x=element_text(size=8)) +
     ggsave(paste("./imgs/",out_dir,"/", exp_prefix, "-time-to-solution.png",sep=""), width=16, height=8)
 print(p)
+
+ggplot(dst_data, aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
+    # geom_boxplot() +
+    geom_jitter(alpha=0.75) +
+    stat_summary(fun.data=mean_cl_boot, fun.args=list(conf.int=0.95), geom="errorbar", color="black") +
+    stat_summary(fun.y = mean, geom = "point", colour = "black") +
+    ggtitle(paste("Directional signal task - time to solution", sep="")) +
+    theme(axis.text.x=element_text(size=8))
+```
+
+```{r}
+metrics <- c("hamming", "hash", "integer", "integer-symmetric", "streak")
+dst_update_rankings <- data.frame(matchbin_metric=character(), 
+                                  aggregate_score=numeric(), 
+                                  update=numeric(),
+                                  update_rank=numeric(),
+                                  solution=numeric())
+for (metric in metrics) {
+  dst_metric <- 
+    filter(dst_data, matchbin_metric==metric)
+  dst_metric <- 
+    subset.data.frame(dst_metric, select=c("aggregate_score", 
+                                           "update", 
+                                           "matchbin_metric",
+                                           "solution"))
+  dst_metric$update <- as.numeric(dst_metric$update)
+  dst_metric$update_ranking <- rank(dst_metric$update, ties.method="random")
+  dst_update_rankings <- rbind(dst_update_rankings, dst_metric)
+}
+
+exp_prefix <- "dst"
+ggplot(filter(dst_update_rankings, update_ranking <= 40), aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
+    geom_jitter(aes(color=matchbin_metric)) +
+    geom_boxplot(alpha=0.75) +
+    ggtitle(paste("Directional signal task - time to solution (first 40)", sep="")) +
+    theme(axis.text.x=element_text(size=8)) +
+    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top40-bp.png", sep=""))
+
+ggplot(filter(dst_update_rankings, update_ranking <= 40), aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
+    geom_jitter(alpha=0.75) +
+    stat_summary(fun.data=mean_cl_boot, fun.args=list(conf.int=0.95), geom="errorbar", color="black") +
+    stat_summary(fun.y = mean, geom = "point", colour = "black") +
+    ggtitle(paste("Directional signal task - time to solution", sep="")) +
+    theme(axis.text.x=element_text(size=8)) +
+    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top40-ci.png", sep=""))
+
+```
+
+```{r}
+dst_first_40_solutions <- filter(dst_update_rankings, update_ranking <= 40)
+kruskal.test(formula = update ~ matchbin_metric, data=dst_first_40_solutions)
+pairwise.wilcox.test(x=dst_first_40_solutions$update,
+                     g=dst_first_40_solutions$matchbin_metric,
+                     p.adjust.method = "bonferroni",
+                     exact=FALSE,
+                     conf.int=TRUE)
 ```
 
 ### Fitness over time x metric
@@ -139,4 +267,159 @@ ggplot(filter(dst_fot_data), aes(x=update, y=score, color=tag_metric, fill=tag_m
   stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA) +
   ggtitle("DST - score over time") +
   ggsave(paste("./imgs/",out_dir,"/dst_score_over_time.pdf", sep=""), width=21, height=10)
+```
+
+## Changing Signal Task
+
+### Solutions x metric
+
+```{r}
+generation_cutoffs <- c(50, 100)
+exp_prefix <- "cst"
+for (gen in generation_cutoffs) {
+  p <- ggplot(filter(cst_data, solution=="1" & update <= gen), aes(x=matchbin_metric, fill=matchbin_metric)) +
+    geom_bar(stat="count", position="dodge") +
+    geom_text(stat="count", 
+            mapping=aes(label=..count..), 
+            position=position_dodge(0.9), vjust=0) +
+    ggtitle(paste("Changing signal task - solutions\n","<= ", gen, sep="")) +
+    ylim(0, num_replicates+2) +
+    theme(axis.text.x=element_text(size=8)) +
+    ggsave(paste("./imgs/",out_dir,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
+  print(p)
+}
+```
+
+Compare each metric's successes using Fisher's exact.
+
+```{r}
+do_ft <- function(data, metric_a, metric_b, n) {
+  a_successes <- 
+    nrow(filter(data, matchbin_metric==metric_a & solution=="1"))
+  b_successes <- 
+    nrow(filter(data, matchbin_metric==metric_b & solution=="1"))
+  table <-
+    matrix(c(a_successes, 
+             b_successes,
+             n-a_successes,
+             n-b_successes),
+           nrow=2)
+  rownames(table) <- c(metric_a, metric_b)
+  colnames(table) <- c("success", "fail")
+  ft <- fisher.test(table)
+  return(ft)
+}
+
+metrics <- c("hamming", "hash", "streak", "integer", "integer-symmetric")
+ft_results = list()
+ft_p_values = list()
+for (i in seq(1, length(metrics))) {
+  for (k in seq(i, length(metrics))) {
+    if (i == k) { next() }
+    # print(paste("i = ", i, "; k = ", k, sep=""))
+    metric_a <- metrics[i]
+    metric_b <- metrics[k]
+    comp_name <- paste(metric_a, "_vs_", metric_b, sep="")
+    # print(comp_name)
+    ft_results[[comp_name]] <- do_ft(cst_data, metric_a, metric_b, num_replicates)
+    ft_p_values[[comp_name]] <- ft_results[[comp_name]]$p.value
+  }
+}
+
+adjusted <- p.adjust(ft_p_values,
+                     method="bonferroni")
+
+for (key in names(adjusted)) {
+  print(paste("Comparison: ", key, sep=""))
+  adjusted_p <- adjusted[[key]]
+  print(paste("  adjusted p value: ", adjusted_p, sep=""))
+  if (adjusted_p < 0.05) { print("  *significant") }
+}
+```
+
+### Time to solution x metric
+
+```{r}
+exp_prefix <- "cst"
+p <- ggplot(cst_data, aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
+    geom_boxplot() +
+    geom_jitter() +
+    ggtitle(paste("Changing signal task - time to solution", sep="")) +
+    theme(axis.text.x=element_text(size=8)) +
+    ggsave(paste("./imgs/",out_dir,"/", exp_prefix, "-time-to-time-to-solution.png",sep=""), width=16, height=8)
+print(p)
+
+ggplot(cst_data, aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
+    geom_jitter(alpha=0.75) +
+    stat_summary(fun.data=mean_cl_boot, fun.args=list(conf.int=0.95), geom="errorbar", color="black") +
+    stat_summary(fun.y = mean, geom = "point", colour = "black") +
+    ggtitle(paste("Changing signal task - time to solution", sep="")) +
+    theme(axis.text.x=element_text(size=8))
+```
+
+```{r}
+metrics <- c("hamming", "hash", "integer", "integer-symmetric", "streak")
+cst_update_rankings <- data.frame(matchbin_metric=character(), 
+                                  score=numeric(), 
+                                  update=numeric(),
+                                  update_rank=numeric(),
+                                  solution=numeric())
+for (metric in metrics) {
+  cst_metric <- 
+    filter(cst_data, matchbin_metric==metric)
+  cst_metric <- 
+    subset.data.frame(cst_metric, select=c("score", 
+                                           "update", 
+                                           "matchbin_metric",
+                                           "solution"))
+  cst_metric$update <- as.numeric(cst_metric$update)
+  cst_metric$update_ranking <- rank(cst_metric$update, ties.method="random")
+  cst_update_rankings <- rbind(cst_update_rankings, cst_metric)
+}
+
+exp_prefix <- "cst"
+ggplot(filter(cst_update_rankings, update_ranking <= 50), aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
+    geom_jitter(aes(color=matchbin_metric)) +
+    geom_boxplot(alpha=0.75) +
+    ggtitle(paste("Changing signal task - time to solution (first 50)", sep="")) +
+    theme(axis.text.x=element_text(size=8)) +
+    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top50-bp.png", sep=""))
+
+ggplot(filter(cst_update_rankings, update_ranking <= 50), aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
+    geom_jitter(alpha=0.75) +
+    stat_summary(fun.data=mean_cl_boot, fun.args=list(conf.int=0.95), geom="errorbar", color="black") +
+    stat_summary(fun.y = mean, geom = "point", colour = "black") +
+    ggtitle(paste("Changing signal task - time to solution", sep="")) +
+    theme(axis.text.x=element_text(size=8)) +
+    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top50-ci.png", sep=""))
+
+```
+
+```{r}
+cst_first_50_solutions <- filter(cst_update_rankings, update_ranking <= 50)
+kruskal.test(formula = update ~ matchbin_metric, data=cst_first_50_solutions)
+pairwise.wilcox.test(x=cst_first_50_solutions$update,
+                     g=cst_first_50_solutions$matchbin_metric,
+                     p.adjust.method = "bonferroni",
+                     exact=FALSE,
+                     conf.int=TRUE)
+```
+
+### Fitness over time x metric
+
+```{r}
+updates <- c(10, 30, 50, 100, 300, 500, 1000, 3000, 5000)
+plot_data <- filter(cst_fot_data, update %in% updates)
+plot_data$update <- factor(plot_data$update)
+
+ggplot(plot_data, aes(x=update, y=score, fill=matchbin_metric)) +
+  geom_boxplot() +
+  ggtitle("CST - score over time") +
+  ggsave(paste("./imgs/",out_dir,"/cst_score_over_time_box.pdf", sep=""), width=21, height=8)
+  
+ggplot(filter(cst_fot_data), aes(x=update, y=score, color=matchbin_metric, fill=matchbin_metric)) +
+  stat_summary(geom = "line", fun.y = mean) +
+  stat_summary(geom = "ribbon", fun.data = mean_cl_boot, fun.args=list(conf.int=0.95), alpha = 0.3, color=NA) +
+  ggtitle("CST - score over time") +
+  ggsave(paste("./imgs/",out_dir,"/cst_score_over_time.pdf", sep=""), width=21, height=10)
 ```
