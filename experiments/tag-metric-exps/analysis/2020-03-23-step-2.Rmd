@@ -8,23 +8,67 @@ output:
     toc_depth: 4
     collapsed: false
     theme: default
+    code_folding: hide
 ---
+
+## Overview
+
+How does choice of tag-matching metric influence adaptive evolution in broader contexts?
+We explore the implications of different tag-matching metrics in the context of SignalGP, a tag-based genetic programming (GP) representation.
+
+We investigate the success of five tag-matching schemes --- integer, integer-symmetric, hash,
+hamming, and streak --- in the context of SignalGP on two diagnostic GP problems: the changing-signal task and the directional-signal task.
+The changing-signal task evaluates how well a GP representation can associate
+a set of distinct behavioral responses each with a particular environmental cue.
+The directional-signal task evaluates how well a representation facilitates signal-response plasticity (i.e., the ability to alter responses to repeated cues during the program's lifetime).
+
+For each task and tag-matching metric, we evolved 200 replicate populations and compared the performance of the most fit genotypes (at the end and during evolution).
+We evolved populations to solve the directional-signal task for 5000 generations and populations to solve the changing-signal task (a significantly easier task) for 100 generations.
+
+We used results from a previous set of runs (2020-03-23-step-1) to select the best mutation rates to use for each metric on each task. We selected the tag mutation rate that produced the most successful replicates (i.e., replicates that produced a program capable of perfectly solving the task) for each task/metric combination. The idea here is to give each metric the best case scenario for measuring its performance. Exploratory experiments have shown that each metric differs in how it responds to mutation rate (some more sensitive than others). 
+
+Directional-signal task per-bit tag mutation rates:
+
+- Hamming metric: 0.001
+- Hash metric: 0.001
+- Streak metric: 0.002
+- Integer metric: 0.002
+- Integer-symmetric: 0.0001
+
+Changing-signal task per-bit tag mutation rates:
+
+- Hamming metric: 0.01
+- Hash metric: 0.002
+- Streak metric: 0.01
+- Integer metric: 0.02
+- Integer-symmetric: 0.02
+
+Note that the mutation rates for the changing-signal task are higher (per metric) than those for the directional-signal task. This is likely because the changing-signal task requires fewer inter-program tag-matching relationships to be maintained over time. 
+
+## Analysis Dependencies
+
+Load required R packages.
+
+```{r, message=FALSE}
+library(tidyr)    
+library(ggplot2)  
+library(plyr)     
+library(dplyr)    
+library(cowplot)  
+
+# Configure our default graphing theme
+theme_set(theme_cowplot())
+```
+
+These analyses were conducted in the following computing environment:
+
+```{r}
+print(version)
+```
 
 ## Setup
 
-### Load R libraries
-
-```{r, message=FALSE}
-library(tidyr)    # (Wickham & Henry, 2018)
-library(ggplot2)  # (Wickham, 2009)
-library(plyr)     # (Wickham, 2011)
-library(dplyr)    # (Wickham et al., 2018)
-library(cowplot)  # (Wilke, 2018)
-```
-
-## Load data
-
-### Extract most performant organisms
+Load the most performant organisms from each condition/replicate.
 
 ```{r}
 extract_max_fit <- function(data_path) {
@@ -48,9 +92,11 @@ cst_data_loc <- paste("../data/",exp_name,"/step-two/chg-env/max_fit_orgs.csv", 
 cst_data <- extract_max_fit(cst_data_loc)
 
 num_replicates <- 200
+alpha <- 0.05
+mult_comp_method <- "holm"
 ```
 
-### Extract fitness over time
+Load fitness over time data for each task.
 
 ```{r}
 dst_fot_data_loc <- paste("../data/", exp_name, "/step-two/dir-sig/fot.csv", sep="")
@@ -76,12 +122,17 @@ cst_fot_data$matchbin_metric <- factor(cst_fot_data$matchbin_metric,
 cst_fot_data$tag_mut_rate <- factor(as.numeric(cst_fot_data$MUT_RATE__FUNC_TAG_BF))
 ```
 
-## Directional Signal Task
+## Directional-signal Task Analyses
 
-### Solutions x metric
+### How many replicates produce solutions for each metric?
 
 ```{r}
 generation_cutoffs <- c(500, 1000, 3000, 5000)
+```
+
+Here, we'll plot the number of solutions found before each of `r generation_cutoffs` generations.
+
+```{r}
 exp_prefix <- "dst"
 for (gen in generation_cutoffs) {
   p <- ggplot(filter(dst_data, solution=="1" & update <= gen), aes(x=matchbin_metric, fill=matchbin_metric)) +
@@ -89,22 +140,30 @@ for (gen in generation_cutoffs) {
     geom_text(stat="count", 
             mapping=aes(label=..count..), 
             position=position_dodge(0.9), vjust=0) +
-    ggtitle(paste("Directional signal task - solutions\n","<= ", gen, sep="")) +
-    ylim(0, num_replicates+2) +
-    theme(axis.text.x=element_text(size=8)) +
+    ggtitle(paste("DST solutions prior to generation ", gen, sep="")) +
+    ylab("# successful replicates") +
+    ylim(0, num_replicates + 2) +
+    scale_x_discrete(name="Tag-matching metric",
+                     limits=c("hamming",
+                              "integer",
+                              "integer-symmetric",
+                              "hash",
+                              "streak")) +
+    theme(legend.position="none",
+          axis.text.x=element_text(size=8)) +
     ggsave(paste("./imgs/",out_dir,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
   print(p)
 }
 ```
 
-Compare each metric's successes using Fisher's exact.
+Compare each metric's successes using Fisher's exact using the `r mult_comp_method` method to correct for multiple comparisons.
 
 ```{r}
-do_ft <- function(metric_a, metric_b, n) {
+do_ft <- function(data, metric_a, metric_b, n) {
   a_successes <- 
-    nrow(filter(dst_data, matchbin_metric==metric_a & solution=="1"))
+    nrow(filter(data, matchbin_metric==metric_a & solution=="1"))
   b_successes <- 
-    nrow(filter(dst_data, matchbin_metric==metric_b & solution=="1"))
+    nrow(filter(data, matchbin_metric==metric_b & solution=="1"))
   table <-
     matrix(c(a_successes, 
              b_successes,
@@ -117,59 +176,38 @@ do_ft <- function(metric_a, metric_b, n) {
   return(ft)
 }
 
-# hamming_integer
-hamming_integer_ft <- 
-  do_ft("hamming", "integer", num_replicates)
-# hamming_integer_sym
-hamming_integer_sym_ft <- 
-  do_ft("hamming", "integer-symmetric", num_replicates)
-# hamming_hash
-hamming_hash_ft <- 
-  do_ft("hamming", "hash", num_replicates)
-# hamming_streak
-hamming_streak_ft <- 
-  do_ft("hamming", "streak", num_replicates)
-# streak_integer
-streak_integer_ft <- 
-  do_ft("streak", "integer", num_replicates)
-# streak_integer_sym
-streak_integer_sym_ft <- 
-  do_ft("streak", "integer-symmetric", num_replicates)
-# streak_hash
-streak_hash_ft <- 
-  do_ft("streak", "hash", num_replicates)
-# hash_integer
-hash_integer_ft <- 
-  do_ft("hash", "integer", num_replicates)
-# hash_integer_sym
-hash_integer_sym_ft <- 
-  do_ft("hash", "integer-symmetric", num_replicates)
-# integer_integer_sym
-integer_integer_sym_ft <- 
-  do_ft("integer", "integer-symmetric", num_replicates)
+metrics <- c("hamming", "hash", "streak", "integer", "integer-symmetric")
+ft_results = list()
+ft_p_values = list()
+# Make all pairwise comparisons w/Fisher's exact.
+for (i in seq(1, length(metrics))) {
+  for (k in seq(i, length(metrics))) {
+    if (i == k) { next() }
+    # print(paste("i = ", i, "; k = ", k, sep=""))
+    metric_a <- metrics[i]
+    metric_b <- metrics[k]
+    comp_name <- paste(metric_a, "_vs_", metric_b, sep="")
+    # print(comp_name)
+    ft_results[[comp_name]] <- do_ft(dst_data, metric_a, metric_b, num_replicates)
+    ft_p_values[[comp_name]] <- ft_results[[comp_name]]$p.value
+  }
+}
 
-p_values <- list(hamming_v_integer = hamming_integer_ft$p.value,
-                 hamming_v_integer_sym = hamming_integer_sym_ft$p.value,
-                 hamming_v_hash = hamming_hash_ft$p.value,
-                 hamming_v_streak = hamming_streak_ft$p.value,
-                 streak_v_integer = streak_integer_ft$p.value,
-                 streak_v_integer_sym = streak_integer_sym_ft$p.value,
-                 streak_v_hash = streak_hash_ft$p.value,
-                 hash_v_integer = hash_integer_ft$p.value,
-                 hash_v_integer_sym = hash_integer_sym_ft$p.value,
-                 integer_v_integer_sym = integer_integer_sym_ft$p.value)
-adjusted <- p.adjust(p_values,
-                     method="bonferroni")
+# Correct for multiple comparisons.
+adjusted <- p.adjust(ft_p_values,
+                     method=mult_comp_method)
 
 for (key in names(adjusted)) {
   print(paste("Comparison: ", key, sep=""))
   adjusted_p <- adjusted[[key]]
   print(paste("  adjusted p value: ", adjusted_p, sep=""))
-  if (adjusted_p < 0.05) { print("  *significant") }
+  if (adjusted_p < alpha) { print("  *significant") }
 }
 ```
 
-### Scores x metric
+### Scores by metric
+
+Looking at scores is a little more fine-grained than looking at solutions.
 
 ```{r}
 exp_prefix <- "dst"
@@ -181,7 +219,9 @@ p <- ggplot(dst_data, aes(x=matchbin_metric, y=aggregate_score, fill=matchbin_me
 print(p)
 ```
 
-### Time to solution x metric
+### How many generations were required for solutions to evolve?
+
+For this first set of plots, we look at _all_ replicates. Replicates in which no solution evolved are assumed to have found a solution in the final generation.
 
 ```{r}
 exp_prefix <- "dst"
@@ -202,7 +242,10 @@ ggplot(dst_data, aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
     theme(axis.text.x=element_text(size=8))
 ```
 
+A better way to look at time to solution is to pick a threshold, K, and look at the first K replicates to produce a solution. Because 20% of replicates in all metrics found a solution, we'll use a 20% threshold (or the first 40 replicates). For this to be a completely fair comparison, we should have selected this threshold _a priori_. We'll treat these comparisions as exploratory, and we'll run a second set of runs (experiments 2020-03-27) with a threshold selected a priori.
+
 ```{r}
+threshold <- 40
 metrics <- c("hamming", "hash", "integer", "integer-symmetric", "streak")
 dst_update_rankings <- data.frame(matchbin_metric=character(), 
                                   aggregate_score=numeric(), 
@@ -223,34 +266,47 @@ for (metric in metrics) {
 }
 
 exp_prefix <- "dst"
-ggplot(filter(dst_update_rankings, update_ranking <= 40), aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
+ggplot(filter(dst_update_rankings, update_ranking <= threshold), aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
     geom_jitter(aes(color=matchbin_metric)) +
     geom_boxplot(alpha=0.75) +
-    ggtitle(paste("Directional signal task - time to solution (first 40)", sep="")) +
-    theme(axis.text.x=element_text(size=8)) +
-    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top40-bp.png", sep=""))
+    ggtitle(paste("DST - first ", threshold, " replicates to find a solution", sep="")) +
+    theme(legend.position="none",
+          axis.text.x=element_text(size=8)) +
+    ylab("generations until solution") +
+    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top-",threshold,"-bp.png", sep=""))
 
-ggplot(filter(dst_update_rankings, update_ranking <= 40), aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
+ggplot(filter(dst_update_rankings, update_ranking <= threshold), aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
     geom_jitter(alpha=0.75) +
     stat_summary(fun.data=mean_cl_boot, fun.args=list(conf.int=0.95), geom="errorbar", color="black") +
     stat_summary(fun.y = mean, geom = "point", colour = "black") +
-    ggtitle(paste("Directional signal task - time to solution", sep="")) +
-    theme(axis.text.x=element_text(size=8)) +
-    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top40-ci.png", sep=""))
+    ggtitle(paste("DST - first ",threshold," replicates to find a solution", sep="")) +
+    ylab("generations until solution") +
+    theme(legend.position="none",
+          axis.text.x=element_text(size=8)) +
+    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top-",threshold,"-ci.png", sep=""))
 
 ```
 
+Let's check to see if the underlying distributions of time to solution is different across metrics using a Kruskal Wallis test.
+
 ```{r}
-dst_first_40_solutions <- filter(dst_update_rankings, update_ranking <= 40)
-kruskal.test(formula = update ~ matchbin_metric, data=dst_first_40_solutions)
-pairwise.wilcox.test(x=dst_first_40_solutions$update,
-                     g=dst_first_40_solutions$matchbin_metric,
-                     p.adjust.method = "bonferroni",
+dst_first_k_solutions <- filter(dst_update_rankings, update_ranking <= threshold)
+kruskal.test(formula = update ~ matchbin_metric, data=dst_first_k_solutions)
+```
+
+Indeed, there is a difference. We can use a post-hoc Wilcoxon rank sum test to identify which distributions are different (with a `r mult_comp_method` to correct for multiple comparisons).
+
+```{r}
+pairwise.wilcox.test(x=dst_first_k_solutions$update,
+                     g=dst_first_k_solutions$matchbin_metric,
+                     p.adjust.method = mult_comp_method,
                      exact=FALSE,
                      conf.int=TRUE)
 ```
 
-### Fitness over time x metric
+Only integer and integer-symmetric metrics do not have a significant difference.
+
+### Fitness over time
 
 ```{r}
 updates <- c(10, 30, 50, 100, 300, 500, 1000, 3000, 5000)
@@ -269,9 +325,11 @@ ggplot(filter(dst_fot_data), aes(x=update, y=score, color=tag_metric, fill=tag_m
   ggsave(paste("./imgs/",out_dir,"/dst_score_over_time.pdf", sep=""), width=21, height=10)
 ```
 
-## Changing Signal Task
+## Changing-signal Task Analyses
 
-### Solutions x metric
+We'll do all the same analyses for the changing-signal task.
+
+### How many replicates produce solutions for each metric?
 
 ```{r}
 generation_cutoffs <- c(50, 100)
@@ -282,9 +340,17 @@ for (gen in generation_cutoffs) {
     geom_text(stat="count", 
             mapping=aes(label=..count..), 
             position=position_dodge(0.9), vjust=0) +
-    ggtitle(paste("Changing signal task - solutions\n","<= ", gen, sep="")) +
-    ylim(0, num_replicates+2) +
-    theme(axis.text.x=element_text(size=8)) +
+    ggtitle(paste("CST solutions prior to generation ", gen, sep="")) +
+    ylab("# successful replicates") +
+    ylim(0, num_replicates + 2) +
+    scale_x_discrete(name="Tag-matching metric",
+                     limits=c("hamming",
+                              "integer",
+                              "integer-symmetric",
+                              "hash",
+                              "streak")) +
+    theme(legend.position="none",
+          axis.text.x=element_text(size=8)) +    
     ggsave(paste("./imgs/",out_dir,"/", exp_prefix, "-solutions-",gen,".png",sep=""), width=16, height=8)
   print(p)
 }
@@ -293,23 +359,6 @@ for (gen in generation_cutoffs) {
 Compare each metric's successes using Fisher's exact.
 
 ```{r}
-do_ft <- function(data, metric_a, metric_b, n) {
-  a_successes <- 
-    nrow(filter(data, matchbin_metric==metric_a & solution=="1"))
-  b_successes <- 
-    nrow(filter(data, matchbin_metric==metric_b & solution=="1"))
-  table <-
-    matrix(c(a_successes, 
-             b_successes,
-             n-a_successes,
-             n-b_successes),
-           nrow=2)
-  rownames(table) <- c(metric_a, metric_b)
-  colnames(table) <- c("success", "fail")
-  ft <- fisher.test(table)
-  return(ft)
-}
-
 metrics <- c("hamming", "hash", "streak", "integer", "integer-symmetric")
 ft_results = list()
 ft_p_values = list()
@@ -337,7 +386,9 @@ for (key in names(adjusted)) {
 }
 ```
 
-### Time to solution x metric
+### How many generations were required for solutions to evolve?
+
+These first two plots assume solutions were found in the final generation of unsuccessful replicates.
 
 ```{r}
 exp_prefix <- "cst"
@@ -357,7 +408,10 @@ ggplot(cst_data, aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
     theme(axis.text.x=element_text(size=8))
 ```
 
+For a better comparisons we look at the generation solutions were found for first 25% of replicates for each metric that found a solution.
+
 ```{r}
+threshold <- 50
 metrics <- c("hamming", "hash", "integer", "integer-symmetric", "streak")
 cst_update_rankings <- data.frame(matchbin_metric=character(), 
                                   score=numeric(), 
@@ -378,37 +432,49 @@ for (metric in metrics) {
 }
 
 exp_prefix <- "cst"
-ggplot(filter(cst_update_rankings, update_ranking <= 50), aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
+
+ggplot(filter(cst_update_rankings, update_ranking <= threshold), aes(x=matchbin_metric, y=update, fill=matchbin_metric)) +
     geom_jitter(aes(color=matchbin_metric)) +
     geom_boxplot(alpha=0.75) +
-    ggtitle(paste("Changing signal task - time to solution (first 50)", sep="")) +
-    theme(axis.text.x=element_text(size=8)) +
-    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top50-bp.png", sep=""))
+    ggtitle(paste("CST - first ", threshold, " replicates to find a solution", sep="")) +
+    theme(legend.position="none",
+          axis.text.x=element_text(size=8)) +
+    ylab("generations until solution") +
+    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top-",threshold,"-bp.png", sep=""))
 
-ggplot(filter(cst_update_rankings, update_ranking <= 50), aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
+ggplot(filter(cst_update_rankings, update_ranking <= threshold), aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
     geom_jitter(alpha=0.75) +
     stat_summary(fun.data=mean_cl_boot, fun.args=list(conf.int=0.95), geom="errorbar", color="black") +
     stat_summary(fun.y = mean, geom = "point", colour = "black") +
-    ggtitle(paste("Changing signal task - time to solution", sep="")) +
-    theme(axis.text.x=element_text(size=8)) +
-    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top50-ci.png", sep=""))
+    ggtitle(paste("CST - first ",threshold," replicates to find a solution", sep="")) +
+    ylab("generations until solution") +
+    theme(legend.position="none",
+          axis.text.x=element_text(size=8)) +
+    ggsave(paste("./imgs/", out_dir,"/", exp_prefix, "-time-to-solution-top-",threshold,"-ci.png", sep=""))
 
 ```
 
+Let's do a Kruskal-Wallis test to see if there's a difference in underlying distributions.
+
 ```{r}
-cst_first_50_solutions <- filter(cst_update_rankings, update_ranking <= 50)
-kruskal.test(formula = update ~ matchbin_metric, data=cst_first_50_solutions)
-pairwise.wilcox.test(x=cst_first_50_solutions$update,
-                     g=cst_first_50_solutions$matchbin_metric,
-                     p.adjust.method = "bonferroni",
+cst_first_K_solutions <- filter(cst_update_rankings, update_ranking <= threshold)
+kruskal.test(formula = update ~ matchbin_metric, data=cst_first_K_solutions)
+```
+
+Indeed, there is, so we'll do a post-hoc pairwise Wilcoxon rank sum test to test for individual differences.
+
+```{r}
+pairwise.wilcox.test(x=cst_first_K_solutions$update,
+                     g=cst_first_K_solutions$matchbin_metric,
+                     p.adjust.method = mult_comp_method,
                      exact=FALSE,
                      conf.int=TRUE)
 ```
 
-### Fitness over time x metric
+### Fitness over time
 
 ```{r}
-updates <- c(10, 30, 50, 100, 300, 500, 1000, 3000, 5000)
+updates <- c(10, 30, 50, 100)
 plot_data <- filter(cst_fot_data, update %in% updates)
 plot_data$update <- factor(plot_data$update)
 
