@@ -55,6 +55,7 @@ library(ggplot2)
 library(plyr)     
 library(dplyr)    
 library(cowplot)  
+library(patchwork)
 
 # Configure our default graphing theme
 theme_set(theme_cowplot())

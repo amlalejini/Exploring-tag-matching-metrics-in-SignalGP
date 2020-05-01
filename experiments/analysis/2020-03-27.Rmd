@@ -252,3 +252,100 @@ wilcox.test(formula = update ~ matchbin_metric, data=cst_first_k_solutions,
 ```
 
 No significant difference between hamming and streak metrics.
+
+## Paper figure
+
+Here's the source code for generating the figure in the paper.
+
+```{r}
+
+all_sol_data_dst <- "../data/2020-03-23/step-two/dir-sig/max_fit_orgs.csv"
+all_sol_data_cst <- "../data/2020-03-23/step-two/chg-env/max_fit_orgs.csv"
+dst_data_03_23 <- extract_max_fit(all_sol_data_dst)
+cst_data_03_23 <- extract_max_fit(all_sol_data_cst)
+
+dst_sols_p <- 
+  ggplot(filter(dst_data_03_23, solution=="1" & update <= 5000), 
+         aes(x=matchbin_metric, fill=matchbin_metric)) +
+    geom_bar(stat="count", position="dodge") +
+    geom_text(stat="count", 
+            mapping=aes(label=..count..), 
+            position=position_dodge(0.9), vjust=0) +
+    ylab("Solutions") +
+    ylim(0, num_replicates + 4) +
+    scale_x_discrete(name="Metric",
+                     limits=c("hamming",
+                              "integer",
+                              "integer-symmetric",
+                              "hash",
+                              "streak"),
+                     labels=c("Hamming",
+                              "Integer",
+                              "Integer (bi)",
+                              "Hash",
+                              "Streak")) +
+    theme(legend.position="none",
+          axis.text.x=element_text(size=8)) 
+
+cst_sols_p <- 
+  ggplot(filter(cst_data_03_23, solution=="1" & update <= 100), 
+         aes(x=matchbin_metric, fill=matchbin_metric)) +
+    geom_bar(stat="count", position="dodge") +
+    geom_text(stat="count", 
+            mapping=aes(label=..count..), 
+            position=position_dodge(0.9), vjust=0) +
+    ylab("Solutions") +
+    ylim(0, num_replicates + 10) +
+    scale_x_discrete(name="Metric",
+                     limits=c("hamming",
+                              "integer",
+                              "integer-symmetric",
+                              "hash",
+                              "streak"),
+                     labels=c("Hamming",
+                              "Integer",
+                              "Integer (bi)",
+                              "Hash",
+                              "Streak")) +
+    theme(legend.position="none",
+          axis.text.x=element_text(size=8)) 
+
+cst_time_p <- 
+  ggplot(filter(cst_update_rankings, update_ranking <= threshold), 
+         aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
+    geom_jitter(alpha=0.75) +
+    stat_summary(fun.data=mean_cl_boot, 
+                 fun.args=list(conf.int=0.95), 
+                 geom="errorbar", 
+                 color="black") +
+    scale_x_discrete(name="Metric",
+                     limits=c("hamming",
+                              "streak"),
+                     labels=c("Hamming",
+                              "Streak")) +
+    ylim(0, 100) +
+    stat_summary(fun.y = mean, geom = "point", colour = "black") +
+    theme(legend.position = "none",
+          axis.text.x=element_text(size=8)) 
+
+dst_time_p <- 
+  ggplot(filter(dst_update_rankings, update_ranking <= threshold), 
+         aes(x=matchbin_metric, y=update, color=matchbin_metric)) +
+    geom_jitter(alpha=0.75) +
+    stat_summary(fun.data=mean_cl_boot, 
+                 fun.args=list(conf.int=0.95), 
+                 geom="errorbar", 
+                 color="black") +
+    scale_x_discrete(name="Metric",
+                     limits=c("hamming",
+                              "streak"),
+                     labels=c("Hamming",
+                              "Streak")) +    ylim(0, 5000) +
+    stat_summary(fun.y = mean, geom = "point", colour = "black") +
+    theme(legend.position = "none",
+          axis.text.x=element_text(size=8)) 
+
+
+( ( cst_sols_p | cst_time_p ) / ( dst_sols_p | dst_time_p ) ) + plot_annotation(tag_levels='A') + ggsave("panel.pdf")
+
+```
