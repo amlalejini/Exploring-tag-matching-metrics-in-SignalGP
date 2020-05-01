@@ -1,8 +1,7 @@
 # Exploratory experiments - 03-12-2020
 
 Look at performance of different SignalGP variants (each using different tag matching metric) on the
-directional signal task. For each tag metric, use most performant mutation rate found in the
-[directional signal mutation rate sweep exploratory experiment](../dir-sig-mut-sweep/).
+directional signal task. For each tag metric, use most performant mutation rate found in previous work.
 
 Result: no clear signal. We need more control over initial genetic variation (to avoid instruction
 substitutions providing fresh tags for regulation instructions).
