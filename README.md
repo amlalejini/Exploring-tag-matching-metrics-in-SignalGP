@@ -6,7 +6,7 @@ Specifically, this repository houses the source code, documentation, and analyse
 
 We characterized the performance SignalGP on two diagnostic tasks (the changing-signal task and the directional-signal task) using each of the five tag-matching metrics.
 
-- **[Diagnostic task descriptions](./docs/tasks-descriptions.md)** - See this document for descriptions of the changing- and directional-signal tasks as well as the parameterizations used by our experiments for each.
+- **[Diagnostic task descriptions](./docs/task-descriptions.md)** - See this document for descriptions of the changing- and directional-signal tasks as well as the parameterizations used by our experiments for each.
 - **Experiment source code** can be found in the [./source/](./source/) directory. Our diagnostic experiments are implemented in C++ using the [Empirical Library](https://github.com/devosoft/Empirical) and a new implementation of [SignalGP](https://github.com/amlalejini/SignalGP).
   - SignalGP version: <https://github.com/amlalejini/SignalGP/releases/tag/1.0>
   - Empirical Library version: <https://github.com/amlalejini/Empirical/releases/tag/v1.0-ALife2020>
