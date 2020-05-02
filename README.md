@@ -1,5 +1,7 @@
 # Exploring tag-matching metrics in SignalGP
 
+[![DOI](https://zenodo.org/badge/248605580.svg)](https://zenodo.org/badge/latestdoi/248605580)
+
 This repository is a companion to our 2020 ALife conference submission that characterizes the properties
 of five tag-matching metrics: Hamming, Hash, Integer, Bidirectional Integer, and Streak.
 Specifically, this repository houses the source code, documentation, and analyses (for final and preliminary experiments) for the genetic programming experiments presented in the paper.
