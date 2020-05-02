@@ -10,9 +10,9 @@ We characterized the performance SignalGP on two diagnostic tasks (the changing-
 - **Experiment source code** can be found in the [./source/](./source/) directory. Our diagnostic experiments are implemented in C++ using the [Empirical Library](https://github.com/devosoft/Empirical) and a new implementation of [SignalGP](https://github.com/amlalejini/SignalGP).
   - SignalGP version: <https://github.com/amlalejini/SignalGP/releases/tag/1.0>
   - Empirical Library version: <https://github.com/amlalejini/Empirical/releases/tag/v1.0-ALife2020>
-- **Data analyses** can be found in the [./experiments/tag-metric-exps/analysis/](./experiments/tag-metric-exps/analysis/) directory. See directory readme for more details.
-- **HPCC submission scripts** can be found in the [./experiments/tag-metric-exps/hpcc/](./experiments/tag-metric-exps/hpcc/) directory. See directory readme for more details.
-- **Data** - TODO
+- **Data analyses** can be found in the [./experiments/analysis/](./experiments/analysis/) directory. See directory readme for more details.
+- **HPCC submission scripts** can be found in the [./experiments/hpcc/](./experiments/hpcc/) directory. See directory readme for more details.
+- **Data** - Data for preliminary and final experiments are in [./experiments/data/](./experiments/data/)
 - **Replication Guide** - See TODO for a step-by-step guide to compiling and running our experiments
   locally.
 
