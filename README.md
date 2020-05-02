@@ -13,7 +13,7 @@ We characterized the performance SignalGP on two diagnostic tasks (the changing-
 - **Data analyses** can be found in the [./experiments/analysis/](./experiments/analysis/) directory. See directory readme for more details.
 - **HPCC submission scripts** can be found in the [./experiments/hpcc/](./experiments/hpcc/) directory. See directory readme for more details.
 - **Data** - Data for preliminary and final experiments are in [./experiments/data/](./experiments/data/)
-- **Replication Guide** - See TODO for a step-by-step guide to compiling and running our experiments
+- **[Replication Guide](./docs/run-locally.md)** - Step-by-step guide to compiling and running our experiments
   locally.
 
 ## Repository contact
